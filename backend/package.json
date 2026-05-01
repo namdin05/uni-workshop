@@ -4,7 +4,11 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "start": "node app.js",
+    "migrate:latest": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "seed": "node seed.js"
   },
   "keywords": [],
   "author": "",
@@ -13,11 +17,16 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.1.5",
     "install": "^0.13.0",
     "knex": "^3.2.9",
     "npm": "^11.13.0",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "qrcode": "^1.5.3",
+    "redis": "^4.6.13",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

@@ -3,3 +3,9 @@
 
 /backend/.env
 /backend/.env.local
+
+context.md
+FRONTEND_SETUP.md
+BACKEND_SETUP.md
+INTEGRATION_GUIDE.md
+QUICK_REFERENCE.md
