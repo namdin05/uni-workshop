@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UniHub Portal - Profile &amp; Tickets</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed": "#001b3c",
+                      "inverse-on-surface": "#f1f0f5",
+                      "secondary-fixed": "#dae4ed",
+                      "primary-fixed-dim": "#a7c8ff",
+                      "on-primary-container": "#799dd6",
+                      "on-tertiary-fixed": "#341100",
+                      "tertiary-fixed-dim": "#ffb690",
+                      "on-tertiary-fixed-variant": "#723610",
+                      "tertiary-fixed": "#ffdbca",
+                      "on-background": "#1a1c1f",
+                      "surface-container-highest": "#e2e2e7",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#bec8d0",
+                      "primary-fixed": "#d5e3ff",
+                      "surface": "#f9f9fe",
+                      "on-primary": "#ffffff",
+                      "surface-tint": "#3a5f94",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-container": "#d8885c",
+                      "surface-container": "#eeedf2",
+                      "on-primary-fixed-variant": "#1f477b",
+                      "primary-container": "#003366",
+                      "secondary": "#566067",
+                      "inverse-surface": "#2f3034",
+                      "on-surface": "#1a1c1f",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f9f9fe",
+                      "surface-container-high": "#e8e8ed",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface-variant": "#43474f",
+                      "on-secondary-fixed-variant": "#3e484f",
+                      "on-secondary-fixed": "#131d23",
+                      "tertiary-container": "#592300",
+                      "on-secondary-container": "#5c666d",
+                      "outline": "#737780",
+                      "surface-dim": "#dad9de",
+                      "surface-variant": "#e2e2e7",
+                      "inverse-primary": "#a7c8ff",
+                      "tertiary": "#381300",
+                      "surface-bright": "#f9f9fe",
+                      "on-error-container": "#93000a",
+                      "outline-variant": "#c3c6d1",
+                      "primary": "#001e40",
+                      "secondary-container": "#dae4ed",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f4f3f8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "lg": "48px",
+                      "base": "8px",
+                      "sm": "12px",
+                      "gutter": "24px",
+                      "xl": "80px",
+                      "md": "24px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "h3": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "h2": ["Inter"],
+                      "h1": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "h3": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                      "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                      "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                      "h2": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "h1": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                      "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                      "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ai-glow {
+            box-shadow: 0px 0px 15px rgba(0, 51, 102, 0.15);
+            background: linear-gradient(90deg, rgba(0, 51, 102, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+            border-left: 2px solid theme('colors.primary');
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0 font-body-md antialiased">
+<!-- TopNavBar (Web) -->
+<nav class="hidden md:flex bg-white dark:bg-slate-900 absolute top-0 w-full border-b border-slate-200 dark:border-slate-800 z-50">
+<div class="flex justify-between items-center w-full px-8 h-16 max-w-[1280px] mx-auto">
+<div class="text-xl font-bold text-[#003366] dark:text-blue-400 tracking-tight">
+                UniHub Portal
+            </div>
+<div class="flex space-x-6">
+<!-- Workshops (Inactive) -->
+<a class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-2 rounded-md" href="#">
+                    Workshops
+                </a>
+<!-- My Learning (Active context for Tickets) -->
+<a class="font-['Inter'] text-sm font-medium text-[#003366] dark:text-blue-400 border-b-2 border-[#003366] pb-1 px-3 py-2 opacity-80 transition-opacity" href="#">
+                    My Learning
+                </a>
+<!-- Certificates (Inactive) -->
+<a class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-2 rounded-md" href="#">
+                    Certificates
+                </a>
+<!-- Resources (Inactive) -->
+<a class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-3 py-2 rounded-md" href="#">
+                    Resources
+                </a>
+</div>
+<div class="flex items-center space-x-4">
+<button class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366]">Login</button>
+<button class="font-['Inter'] text-sm font-medium bg-[#003366] text-white px-4 py-2 rounded-DEFAULT hover:opacity-90">Register</button>
+</div>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="max-w-container-max mx-auto px-md md:px-lg pt-lg md:pt-xl mt-8 md:mt-16 space-y-gutter">
+<!-- Profile Header Bento -->
+<div class="bg-surface rounded-xl border border-outline-variant p-gutter flex flex-col md:flex-row items-start md:items-center justify-between gap-gutter shadow-sm">
+<div class="flex items-center gap-gutter">
+<div class="w-24 h-24 rounded-full bg-surface-container overflow-hidden border-2 border-primary-fixed shrink-0">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a young professional woman smiling softly, natural lighting, soft background blur" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWuINKjzyYJ9dZEE3g7Wcfba__L_salw3ne65POATkHTeK_Ik0A-_Bm6211eg9Be_Or2PCZk6KXPiC5fz_PdMHeXNgB4T7aQMlSfhHMOukkFLTyo4pQW3lF_kvifYqA9pIFTjtL_r3x4Cdfw0rwijZ_9zACWwokZJpnauzCqq1TKNnvbd_H4CgGJa4tQHwp2Yr3Tcm9EVMKaSBRBAoo_cf_5JMTE00gWukN50U0TFj9cPu7zfxwOD7_s-5OzDU5X2vixpuzBdMLEo"/>
+</div>
+<div class="space-y-base">
+<h1 class="font-h2 text-h2 text-on-surface">Sarah Jenkins</h1>
+<div class="flex flex-wrap items-center gap-sm">
+<span class="bg-primary-fixed text-primary-container font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT border border-primary-fixed-dim">MSc Computer Science</span>
+<span class="font-body-md text-body-md text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+                            ID: 2024-8910
+                        </span>
+</div>
+</div>
+</div>
+<div class="flex gap-sm w-full md:w-auto">
+<button class="flex-1 md:flex-none px-6 py-3 bg-surface border border-outline font-label-md text-label-md text-on-surface rounded-lg hover:bg-surface-container transition-colors">Edit Profile</button>
+</div>
+</div>
+<!-- Dashboard Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Main Column: Tickets -->
+<div class="lg:col-span-8 space-y-md">
+<div class="flex justify-between items-center mb-sm">
+<h2 class="font-h3 text-h3 text-on-surface">My Tickets</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-3 py-1 rounded-full">2 Upcoming</span>
+</div>
+<!-- Ticket Card 1 (Bento style, high-end) -->
+<div class="bg-surface rounded-xl border border-outline-variant flex flex-col md:flex-row overflow-hidden group hover:border-primary-fixed-dim transition-colors">
+<!-- Ticket Details -->
+<div class="p-gutter flex-1 border-b md:border-b-0 md:border-r border-outline-variant border-dashed relative">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="space-y-sm mb-lg">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Workshop</span>
+<h3 class="font-h3 text-h3 text-on-surface pr-8">Advanced Data Structures &amp; Algorithms</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">An intensive deep-dive into graph theory and dynamic programming optimization techniques for large scale applications.</p>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="flex items-start gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_today</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Date</p>
+<p class="font-label-md text-label-md text-on-surface">Oct 24, 2024</p>
+</div>
+</div>
+<div class="flex items-start gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">schedule</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Time</p>
+<p class="font-label-md text-label-md text-on-surface">10:00 AM - 1:00 PM</p>
+</div>
+</div>
+<div class="flex items-start gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Location</p>
+<p class="font-label-md text-label-md text-on-surface">Tech Hub, Room 4B</p>
+</div>
+</div>
+</div>
+</div>
+<!-- QR Code Section -->
+<div class="bg-surface-container-lowest p-gutter flex flex-col items-center justify-center min-w-[240px] gap-sm">
+<div class="bg-white p-4 rounded-lg border border-outline-variant shadow-sm">
+<img alt="QR Code" class="w-32 h-32 object-cover grayscale contrast-150" data-alt="Black and white square matrix barcode, crisp graphic for scanning, minimalist composition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXwMvSwb9bBLYtBVr0Ssu0lGOfSWlhzoifPkm3b29jniC_EJ_NffvBl1YU2V8mXSBQUUVQaDC3cIkIuz7qWWpxNt1tdJ8gz2ejutOrJq7rre33HAhtebFX11epSNBHaORwESHCWBcO0fZIVGAzTuZ_5Ce4nV1p3Bf8pdOGA49-4gQmv3mbXRurVqRp4YF0JgeQc9T9V1DkquAa-Ci3_jvZx6uKv16ahYcVdJwA6GqCMlml_A_TrR_PhABaH1QKHgsfuLlEtdwn9zc"/>
+</div>
+<div class="text-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Scan for Check-in</p>
+<p class="font-label-md text-label-md text-on-surface tracking-widest">#TKT-8921</p>
+</div>
+<button class="mt-2 text-primary font-label-md text-label-md flex items-center gap-xs hover:underline">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                            Save PDF
+                        </button>
+</div>
+</div>
+<!-- Ticket Card 2 (AI Summary Glow applied for emphasis) -->
+<div class="bg-surface rounded-xl border border-outline-variant flex flex-col md:flex-row overflow-hidden group hover:border-primary-fixed-dim transition-colors ai-glow">
+<!-- Ticket Details -->
+<div class="p-gutter flex-1 border-b md:border-b-0 md:border-r border-outline-variant border-dashed relative">
+<div class="space-y-sm mb-lg">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Seminar</span>
+<h3 class="font-h3 text-h3 text-on-surface pr-8">AI Ethics in Modern Practice</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Exploring the philosophical and practical implications of deploying machine learning models in critical infrastructure.</p>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="flex items-start gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_today</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Date</p>
+<p class="font-label-md text-label-md text-on-surface">Nov 02, 2024</p>
+</div>
+</div>
+<div class="flex items-start gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">schedule</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Time</p>
+<p class="font-label-md text-label-md text-on-surface">2:00 PM - 4:30 PM</p>
+</div>
+</div>
+<div class="flex items-start gap-xs">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Location</p>
+<p class="font-label-md text-label-md text-on-surface">Main Auditorium</p>
+</div>
+</div>
+</div>
+</div>
+<!-- QR Code Section -->
+<div class="bg-surface-container-lowest p-gutter flex flex-col items-center justify-center min-w-[240px] gap-sm">
+<div class="bg-white p-4 rounded-lg border border-outline-variant shadow-sm opacity-50 relative">
+<!-- Overlay for upcoming far-out tickets -->
+<div class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-[1px] rounded-lg">
+<span class="material-symbols-outlined text-on-surface">lock</span>
+</div>
+<img alt="QR Code Hidden" class="w-32 h-32 object-cover grayscale contrast-150" data-alt="Black and white square matrix barcode, crisp graphic for scanning, obscured by slight blur overlay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkqg2-x1wGLbRfPz51xq5J8BSE467FhAOmDwGBAWrTZAt_lavHsKPjY03zKWY6WdZFudHWzshP4pZpsHIm4RIsvo_Sam0Ry0TTeKkJ-wnJhU3gU_cuIaAmO9PVsu9fAJcKJADqUNx_I2xvke2xKWNbWHwAA1Ds09cN5dcxAH5Kvf8tKRk9FnWzl7gVk6bsHm3IIOeMJngWPKZNZ3wYJscJtrFFMmpArdhxUT-h_QgrUZt7RfrHYlstYLgYHMgHOM1Cv6jvFUdqF6o"/>
+</div>
+<div class="text-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Available 24h prior</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-widest">#TKT-9044</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Column: Stats & Actions -->
+<div class="lg:col-span-4 space-y-gutter">
+<!-- Academic Stats Bento -->
+<div class="bg-surface rounded-xl border border-outline-variant p-gutter">
+<h3 class="font-h3 text-h3 text-on-surface mb-md">Academic Progress</h3>
+<div class="space-y-sm">
+<div class="flex justify-between items-center p-sm bg-surface-container-low rounded-lg">
+<span class="font-body-md text-body-md text-on-surface">Workshops Attended</span>
+<span class="font-h2 text-h2 text-primary">14</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-low rounded-lg">
+<span class="font-body-md text-body-md text-on-surface">Certificates Earned</span>
+<span class="font-h2 text-h2 text-primary">3</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-low rounded-lg">
+<span class="font-body-md text-body-md text-on-surface">Total Hours</span>
+<span class="font-h2 text-h2 text-primary">42</span>
+</div>
+</div>
+<button class="w-full mt-md py-3 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:opacity-90 transition-opacity">View Full Transcript</button>
+</div>
+<!-- Need Help -->
+<div class="bg-secondary-container rounded-xl border border-outline-variant p-gutter text-center">
+<span class="material-symbols-outlined text-[32px] text-on-secondary-container mb-sm">help_center</span>
+<h3 class="font-label-md text-label-md text-on-secondary-container mb-xs">Need help with registration?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md text-sm">Contact the academic advising office for support.</p>
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-lg font-label-sm text-label-sm hover:bg-surface-container transition-colors w-full">Contact Support</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+<!-- Schedule (Inactive) -->
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 p-1 rounded-xl w-16">
+<span class="material-symbols-outlined mb-1 text-[24px]">calendar_today</span>
+<span class="font-['Inter'] text-[10px] font-medium">Schedule</span>
+</button>
+<!-- Scanner (Inactive) -->
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 p-1 rounded-xl w-16">
+<span class="material-symbols-outlined mb-1 text-[24px]">qr_code_scanner</span>
+<span class="font-['Inter'] text-[10px] font-medium">Scanner</span>
+</button>
+<!-- Staff (Inactive) -->
+<button class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 p-1 rounded-xl w-16">
+<span class="material-symbols-outlined mb-1 text-[24px]">assignment_ind</span>
+<span class="font-['Inter'] text-[10px] font-medium">Staff</span>
+</button>
+<!-- Profile (Active context) -->
+<button class="flex flex-col items-center justify-center text-[#003366] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl p-1 w-16 scale-95 transition-all duration-150">
+<span class="material-symbols-outlined mb-1 text-[24px]" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Inter'] text-[10px] font-medium">Profile</span>
+</button>
+</nav>
+</body></html>

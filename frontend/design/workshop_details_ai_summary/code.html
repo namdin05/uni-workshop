@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workshop Detail - UniHub Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#001b3c",
+                        "inverse-on-surface": "#f1f0f5",
+                        "secondary-fixed": "#dae4ed",
+                        "primary-fixed-dim": "#a7c8ff",
+                        "on-primary-container": "#799dd6",
+                        "on-tertiary-fixed": "#341100",
+                        "tertiary-fixed-dim": "#ffb690",
+                        "on-tertiary-fixed-variant": "#723610",
+                        "tertiary-fixed": "#ffdbca",
+                        "on-background": "#1a1c1f",
+                        "surface-container-highest": "#e2e2e7",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#bec8d0",
+                        "primary-fixed": "#d5e3ff",
+                        "surface": "#f9f9fe",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#3a5f94",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#d8885c",
+                        "surface-container": "#eeedf2",
+                        "on-primary-fixed-variant": "#1f477b",
+                        "primary-container": "#003366",
+                        "secondary": "#566067",
+                        "inverse-surface": "#2f3034",
+                        "on-surface": "#1a1c1f",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f9f9fe",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#43474f",
+                        "on-secondary-fixed-variant": "#3e484f",
+                        "on-secondary-fixed": "#131d23",
+                        "tertiary-container": "#592300",
+                        "on-secondary-container": "#5c666d",
+                        "outline": "#737780",
+                        "surface-dim": "#dad9de",
+                        "surface-variant": "#e2e2e7",
+                        "inverse-primary": "#a7c8ff",
+                        "tertiary": "#381300",
+                        "surface-bright": "#f9f9fe",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c3c6d1",
+                        "primary": "#001e40",
+                        "secondary-container": "#dae4ed",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f4f3f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "lg": "48px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "xl": "80px",
+                        "md": "24px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "h3": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "h2": ["Inter"],
+                        "h1": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "h3": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "h2": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "h1": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .ai-glow {
+            box-shadow: 0px 0px 15px rgba(167, 200, 255, 0.4);
+        }
+        .ai-gradient-bg {
+            background: linear-gradient(to right, #f9f9fe 0%, rgba(167, 200, 255, 0.05) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Shared Component: TopNavBar -->
+<nav class="bg-white dark:bg-slate-900 docked full-width top-0 border-b border-b border-slate-200 dark:border-slate-800 flat no shadows z-50 sticky">
+<div class="flex justify-between items-center w-full px-8 h-16 max-w-[1280px] mx-auto">
+<div class="flex items-center gap-8">
+<div class="text-xl font-bold text-[#003366] dark:text-blue-400 tracking-tight">UniHub Portal</div>
+<div class="hidden md:flex gap-6">
+<a class="font-['Inter'] text-sm font-medium text-[#003366] dark:text-blue-400 border-b-2 border-[#003366] pb-1 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors Active: opacity-80 transition-opacity" href="#">Workshops</a>
+<a class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">My Learning</a>
+<a class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">Certificates</a>
+<a class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="#">Resources</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-['Inter'] text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-[#003366]">Login</button>
+<button class="font-['Inter'] text-sm font-medium bg-[#003366] text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Register</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="max-w-container-max mx-auto px-8 py-12">
+<!-- Back Navigation -->
+<a class="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md mb-8" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back to Workshop Catalog
+        </a>
+<!-- Hero Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12 items-start">
+<!-- Left Column: Workshop Details -->
+<div class="lg:col-span-7 flex flex-col gap-6">
+<!-- Chips -->
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm border border-primary-fixed-dim">
+                        Data Science
+                    </span>
+<span class="inline-flex items-center px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm border border-secondary-fixed-dim">
+                        Advanced Level
+                    </span>
+</div>
+<!-- Title & Synopsis -->
+<div>
+<h1 class="font-h1 text-h1 text-primary mb-4">Applied Machine Learning: From Theory to Production</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        Master the end-to-end lifecycle of machine learning models. Learn to design, deploy, and scale intelligent systems in a rigorous academic environment utilizing state-of-the-art computational clusters.
+                    </p>
+</div>
+<!-- Meta Details Grid -->
+<div class="grid grid-cols-2 gap-4 py-6 border-y border-outline-variant/30">
+<div class="flex items-center gap-3 text-on-surface">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Date</div>
+<div class="font-label-md text-label-md">Oct 14 - Oct 16, 2024</div>
+</div>
+</div>
+<div class="flex items-center gap-3 text-on-surface">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Time</div>
+<div class="font-label-md text-label-md">09:00 AM - 04:00 PM EST</div>
+</div>
+</div>
+<div class="flex items-center gap-3 text-on-surface">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Location</div>
+<div class="font-label-md text-label-md">Innovation Hall, Room 402</div>
+</div>
+</div>
+<div class="flex items-center gap-3 text-on-surface">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">group</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Capacity</div>
+<div class="font-label-md text-label-md">24 Seats (5 Remaining)</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-4 mt-2">
+<!-- Using primary-container as instructed for Paid/Primary actions -->
+<button class="bg-primary text-on-primary font-label-md text-label-md px-8 py-3.5 rounded-lg hover:bg-primary-fixed-variant transition-colors flex items-center gap-2 shadow-sm">
+<span>Register Now</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<!-- Free option styling using theme tokens that convey a positive/available state -->
+<button class="bg-primary-fixed text-on-primary-fixed-variant font-label-md text-label-md px-6 py-3.5 rounded-lg hover:bg-primary-fixed-dim transition-colors flex items-center gap-2 border border-primary-fixed-dim">
+<span class="material-symbols-outlined text-[18px]">task_alt</span>
+<span>Audit (Free)</span>
+</button>
+</div>
+</div>
+<!-- Right Column: Featured Hero Image -->
+<div class="lg:col-span-5 h-full min-h-[400px] rounded-2xl overflow-hidden border border-outline-variant shadow-sm relative group">
+<div class="absolute inset-0 bg-primary/10 group-hover:bg-transparent transition-colors z-10 duration-500"></div>
+<img alt="Workshop Environment" class="w-full h-full object-cover" data-alt="diverse group of university students collaborating around laptops in a modern brightly lit academic laboratory setting with glass whiteboards in background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCiZsPp5DTJe38vSzaKCGfDJ5jJuaDlVAs2j4n7AeW0tBPry4VSQSRp_z041JSjCu0lQTWnX3lO_O8sSkhVsETqIL6XXTyn30TVHCIuQgnpUHVjCRf_M1eaU3GOlwKlZ4XAUipPGX22gI3OhANPxs8XJVjCnS3Ol689jo_ty_y4RfYv7__WPx1sufzzKeXKyNnTJ1PZoD8WL0ewuQGAIsDpkcmoLl23pZsduHP3bF87Yu2FEsgljtGz7NuaeR1sRpLbtTKTyQqtDg"/>
+</div>
+</section>
+<!-- AI Summary Feature Component -->
+<section class="ai-gradient-bg border-l-[3px] border-primary-fixed rounded-xl p-8 mb-16 ai-glow relative overflow-hidden">
+<!-- Decorative background element -->
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-start gap-6 relative z-10">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<h3 class="font-h3 text-h3 text-primary">AI Syllabus Summary</h3>
+<span class="px-2 py-0.5 bg-primary-fixed text-on-primary-fixed-variant text-[10px] uppercase tracking-wider font-bold rounded">Auto-Generated</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-4">
+                        This intensive 3-day workshop focuses on practical deployment of ML models. Participants will transition from Jupyter Notebooks to containerized microservices. Expect hands-on exercises utilizing Docker, Kubernetes, and cloud infrastructure.
+                    </p>
+<ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 font-body-md text-body-md text-on-surface">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[18px]">check_circle</span>
+                            Build scalable data pipelines
+                        </li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[18px]">check_circle</span>
+                            Implement model monitoring &amp; CI/CD
+                        </li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[18px]">check_circle</span>
+                            Optimize inference latency
+                        </li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[18px]">check_circle</span>
+                            Handle concept drift in production
+                        </li>
+</ul>
+</div>
+</div>
+</section>
+<!-- Bento Grid Layout for Details -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Main Content Area -->
+<div class="md:col-span-8 flex flex-col gap-gutter">
+<!-- Prerequisites Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm">
+<h2 class="font-h2 text-h2 text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">rule</span>
+                        Prerequisites
+                    </h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+                        To ensure all participants can keep pace with the intensive curriculum, the following baseline knowledge is required:
+                    </p>
+<div class="flex flex-col gap-4">
+<div class="flex gap-4 items-start p-4 bg-surface-container-low rounded-lg border border-outline-variant/50">
+<span class="material-symbols-outlined text-primary mt-1">code</span>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Python Proficiency</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Comfortable with OOP, decorators, and basic asynchronous programming.</p>
+</div>
+</div>
+<div class="flex gap-4 items-start p-4 bg-surface-container-low rounded-lg border border-outline-variant/50">
+<span class="material-symbols-outlined text-primary mt-1">terminal</span>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Command Line Familiarity</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Basic bash scripting, ssh, and file permission management in Linux environments.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Content Area -->
+<div class="md:col-span-4 flex flex-col gap-gutter">
+<!-- Instructor Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col items-center text-center">
+<img alt="Dr. Alan Turing" class="w-24 h-24 rounded-full object-cover border-4 border-surface-container mb-4" data-alt="professional headshot of a middle aged male professor with glasses wearing a dark blazer against a clean light grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWNutOtxn2OJr2rjz01d7q68g2lhIK7zQtziIcOTjorDjWL0neNA2EWDeJX9P1J9dHLBDYPcgwNx-rRY6I8Q_aGUvbrRWzqDb1oHgVzdnh1Y6bS1HE32krsOkprMMk97BwwlkdVXs0_szBOeBvDox9SFIvqhvpGUM4LTQs4d7_RyxxOMzFxzacBL3s1aA5b7Oyc7m7ll8lEOWaXE7alGu-toqvIKSQFjZRuzNSEmUijzpFnuACCvhkICQ3f7b4i467s-xhxVsMpY8"/>
+<h3 class="font-h3 text-h3 text-primary mb-1">Dr. Julian Vance</h3>
+<p class="font-label-md text-label-md text-primary-container mb-4">Lead AI Researcher</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm leading-relaxed mb-6">
+                        Former Principal Engineer at TechCorp. Dr. Vance specializes in distributed systems and making complex ML architecture accessible to developing engineers.
+                    </p>
+<button class="w-full py-2 bg-surface-container text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-highest transition-colors border border-outline-variant/50">
+                        View Profile
+                    </button>
+</div>
+<!-- Room Layout Diagram -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<h3 class="font-label-md text-label-md text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">floor</span>
+                        Room Layout
+                    </h3>
+<div class="w-full aspect-video bg-surface-container-low rounded-lg border border-outline-variant/30 overflow-hidden relative">
+<img alt="Classroom Layout" class="w-full h-full object-cover opacity-90 mix-blend-multiply" data-alt="top down architectural blueprint floor plan of a modern university classroom showing desk clusters and projector placement in soft blue tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDq9Vgl2xGol7V-6U9X5xPaOeM3Rfl_x34hlvX_f6r4BSVcU8l5cIoQR6ycpWMBkbNcb1dZ3OLwapGugjij7zrP0g93r-2x2jvWiPK9mdCAbqodjhgs9qcvyOz_J5GX57QXC4HKUF9JEjdWWLleyeM3211lppN3DwA0hRPDbmceOxtmMn-TrqWm9by5QyXwjYW7OqB7v6cEmGLRbtmCK1T2LC6ME91F6a6mLNQxk6Oy-f-CBs3Ya2ImGt4Mu9cQI4DBuAQobJnvAVM"/>
+<div class="absolute inset-0 bg-primary-fixed/10 pointer-events-none"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-3 text-center">
+                        Innovation Hall - Collaborative Cluster Setup
+                    </p>
+</div>
+</div>
+</section>
+</main>
+</body></html>

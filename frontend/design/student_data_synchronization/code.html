@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard - Data Sync</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed": "#001b3c",
+                      "inverse-on-surface": "#f1f0f5",
+                      "secondary-fixed": "#dae4ed",
+                      "primary-fixed-dim": "#a7c8ff",
+                      "on-primary-container": "#799dd6",
+                      "on-tertiary-fixed": "#341100",
+                      "tertiary-fixed-dim": "#ffb690",
+                      "on-tertiary-fixed-variant": "#723610",
+                      "tertiary-fixed": "#ffdbca",
+                      "on-background": "#1a1c1f",
+                      "surface-container-highest": "#e2e2e7",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#bec8d0",
+                      "primary-fixed": "#d5e3ff",
+                      "surface": "#f9f9fe",
+                      "on-primary": "#ffffff",
+                      "surface-tint": "#3a5f94",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-container": "#d8885c",
+                      "surface-container": "#eeedf2",
+                      "on-primary-fixed-variant": "#1f477b",
+                      "primary-container": "#003366",
+                      "secondary": "#566067",
+                      "inverse-surface": "#2f3034",
+                      "on-surface": "#1a1c1f",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f9f9fe",
+                      "surface-container-high": "#e8e8ed",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface-variant": "#43474f",
+                      "on-secondary-fixed-variant": "#3e484f",
+                      "on-secondary-fixed": "#131d23",
+                      "tertiary-container": "#592300",
+                      "on-secondary-container": "#5c666d",
+                      "outline": "#737780",
+                      "surface-dim": "#dad9de",
+                      "surface-variant": "#e2e2e7",
+                      "inverse-primary": "#a7c8ff",
+                      "tertiary": "#381300",
+                      "surface-bright": "#f9f9fe",
+                      "on-error-container": "#93000a",
+                      "outline-variant": "#c3c6d1",
+                      "primary": "#001e40",
+                      "secondary-container": "#dae4ed",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f4f3f8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xs": "4px",
+                      "lg": "48px",
+                      "base": "8px",
+                      "sm": "12px",
+                      "gutter": "24px",
+                      "xl": "80px",
+                      "md": "24px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "h3": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "h2": ["Inter"],
+                      "h1": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "h3": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                      "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                      "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                      "h2": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "h1": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                      "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                      "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar (Shared Component) -->
+<nav class="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant py-6 z-40">
+<!-- Header -->
+<div class="px-md mb-lg">
+<div class="flex items-center gap-sm mb-xs">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md">
+<span class="material-symbols-outlined" style="font-size: 18px;">admin_panel_settings</span>
+</div>
+<h1 class="font-h3 text-h3 text-primary-container">Admin Panel</h1>
+</div>
+<p class="font-body-md text-sm text-on-surface-variant">University Management</p>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 flex flex-col gap-xs px-base">
+<!-- Dashboard (Inactive) -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary-container transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<!-- Workshops (Inactive) -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary-container transition-all" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-label-md text-label-md">Workshops</span>
+</a>
+<!-- Instructors (Inactive) -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary-container transition-all" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-label-md text-label-md">Instructors</span>
+</a>
+<!-- Students (Active - Semantic Mapping based on Data Sync intent) -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-primary-container bg-primary-fixed border-r-4 border-primary-container active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+<!-- Analytics (Inactive) -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary-container transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<!-- Settings (Inactive) -->
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary-container transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+<!-- CTA & Footer -->
+<div class="px-md mt-auto pt-lg flex flex-col gap-md">
+<button class="w-full bg-primary-container text-on-primary py-sm px-md rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity flex justify-center items-center gap-xs">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                New Workshop
+            </button>
+<a class="flex items-center gap-sm px-sm py-xs text-on-surface-variant hover:text-primary-container transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Help Center</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- Header Section -->
+<header class="w-full px-lg py-md border-b border-outline-variant bg-surface-container-lowest">
+<div class="max-w-[1280px] mx-auto flex items-center justify-between">
+<div>
+<h2 class="font-h2 text-h2 text-on-surface">Data Synchronization</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Upload and manage student roster records via CSV.</p>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-sm">
+<button class="flex items-center gap-xs px-md py-sm rounded-lg border border-outline hover:bg-surface-container transition-colors font-label-md text-label-md text-on-surface">
+<span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                        Template
+                    </button>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<div class="flex-1 w-full max-w-[1280px] mx-auto p-lg flex flex-col gap-lg">
+<!-- Upload Zone -->
+<section class="w-full bg-surface-container-lowest border-2 border-dashed border-outline-variant rounded-xl p-xl flex flex-col items-center justify-center text-center transition-all hover:bg-surface-container-low hover:border-primary-container cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center mb-sm group-hover:scale-105 transition-transform duration-300">
+<span class="material-symbols-outlined text-[32px] text-primary-container">cloud_upload</span>
+</div>
+<h3 class="font-h3 text-h3 text-on-surface mb-xs">Drag &amp; Drop CSV Files Here</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md max-w-md">Ensure your file matches the required template format for accurate syncing of student identifiers, names, and assigned workshops.</p>
+<div class="flex items-center gap-sm">
+<span class="font-body-md text-sm text-outline px-sm">OR</span>
+</div>
+<button class="mt-md px-lg py-sm bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:shadow-md transition-all">
+                    Browse Files
+                </button>
+<p class="font-label-sm text-label-sm text-outline mt-sm">Supported format: .CSV up to 50MB</p>
+</section>
+<!-- Status Log Section -->
+<section class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<!-- Log Header -->
+<div class="px-md py-sm bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-h3 text-h3 text-on-surface text-[18px]">Recent Sync Activity</h3>
+<button class="flex items-center gap-xs text-on-surface-variant hover:text-primary-container transition-colors font-label-sm text-label-sm">
+<span class="material-symbols-outlined" style="font-size: 16px;">filter_list</span>
+                        Filter
+                    </button>
+</div>
+<!-- Log List -->
+<div class="flex flex-col">
+<!-- Entry: Success -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-md border-b border-outline-variant last:border-b-0 hover:bg-surface-container-lowest/50 transition-colors gap-sm">
+<div class="flex items-start gap-md">
+<div class="mt-xs">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">roster_engineering_101.csv</h4>
+<p class="font-body-md text-sm text-on-surface-variant mt-xs">Successfully synced 142 student records. No anomalies detected.</p>
+</div>
+</div>
+<div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-xs w-full sm:w-auto">
+<span class="font-label-sm text-label-sm text-outline">Today, 10:45 AM</span>
+<span class="px-sm py-xs rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm border border-primary-fixed-dim">Success</span>
+</div>
+</div>
+<!-- Entry: Error -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-md border-b border-outline-variant last:border-b-0 hover:bg-surface-container-lowest/50 transition-colors gap-sm bg-error-container/10">
+<div class="flex items-start gap-md">
+<div class="mt-xs">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">late_enrollment_batch_b.csv</h4>
+<p class="font-body-md text-sm text-error mt-xs">Failed to parse. Invalid date format in column 'EnrollmentDate' at row 34.</p>
+<button class="text-primary-container font-label-sm text-label-sm hover:underline mt-xs">View Error Details</button>
+</div>
+</div>
+<div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-xs w-full sm:w-auto">
+<span class="font-label-sm text-label-sm text-outline">Today, 09:12 AM</span>
+<span class="px-sm py-xs rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm border border-error/20">Failed</span>
+</div>
+</div>
+<!-- Entry: Success -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-md border-b border-outline-variant last:border-b-0 hover:bg-surface-container-lowest/50 transition-colors gap-sm">
+<div class="flex items-start gap-md">
+<div class="mt-xs">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">faculty_updates_q3.csv</h4>
+<p class="font-body-md text-sm text-on-surface-variant mt-xs">Successfully synced 18 instructor records.</p>
+</div>
+</div>
+<div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-xs w-full sm:w-auto">
+<span class="font-label-sm text-label-sm text-outline">Yesterday, 16:30 PM</span>
+<span class="px-sm py-xs rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm border border-primary-fixed-dim">Success</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

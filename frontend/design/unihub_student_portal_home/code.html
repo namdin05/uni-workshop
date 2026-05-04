@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UniHub Student Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#001b3c",
+                    "inverse-on-surface": "#f1f0f5",
+                    "secondary-fixed": "#dae4ed",
+                    "primary-fixed-dim": "#a7c8ff",
+                    "on-primary-container": "#799dd6",
+                    "on-tertiary-fixed": "#341100",
+                    "tertiary-fixed-dim": "#ffb690",
+                    "on-tertiary-fixed-variant": "#723610",
+                    "tertiary-fixed": "#ffdbca",
+                    "on-background": "#1a1c1f",
+                    "surface-container-highest": "#e2e2e7",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#bec8d0",
+                    "primary-fixed": "#d5e3ff",
+                    "surface": "#f9f9fe",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#3a5f94",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-container": "#d8885c",
+                    "surface-container": "#eeedf2",
+                    "on-primary-fixed-variant": "#1f477b",
+                    "primary-container": "#003366",
+                    "secondary": "#566067",
+                    "inverse-surface": "#2f3034",
+                    "on-surface": "#1a1c1f",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f9f9fe",
+                    "surface-container-high": "#e8e8ed",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#43474f",
+                    "on-secondary-fixed-variant": "#3e484f",
+                    "on-secondary-fixed": "#131d23",
+                    "tertiary-container": "#592300",
+                    "on-secondary-container": "#5c666d",
+                    "outline": "#737780",
+                    "surface-dim": "#dad9de",
+                    "surface-variant": "#e2e2e7",
+                    "inverse-primary": "#a7c8ff",
+                    "tertiary": "#381300",
+                    "surface-bright": "#f9f9fe",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#c3c6d1",
+                    "primary": "#001e40",
+                    "secondary-container": "#dae4ed",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f4f3f8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "lg": "48px",
+                    "base": "8px",
+                    "sm": "12px",
+                    "gutter": "24px",
+                    "xl": "80px",
+                    "md": "24px",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "h3": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "h2": ["Inter"],
+                    "h1": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "h3": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "h2": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "h1": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #f9f9fe; } /* Ensure body matches surface color */
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased pb-20 md:pb-0">
+<!-- Desktop TopNavBar Component from JSON -->
+<header class="hidden md:block sticky w-full top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flat no shadows">
+<nav class="flex justify-between items-center w-full px-8 h-16 max-w-[1280px] mx-auto">
+<!-- Brand -->
+<div class="text-xl font-bold text-[#003366] dark:text-blue-400 tracking-tight flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+                UniHub Portal
+            </div>
+<!-- Navigation Links -->
+<ul class="flex items-center gap-6 h-full font-['Inter'] text-sm font-medium">
+<li class="h-full flex items-center">
+<!-- Active State for Workshops -->
+<a class="text-[#003366] dark:text-blue-400 border-b-2 border-[#003366] pb-1 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors Active: opacity-80 transition-opacity flex items-center h-full px-2 mt-[2px]" href="#">
+                        Workshops
+                    </a>
+</li>
+<li class="h-full flex items-center">
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center h-full px-2" href="#">
+                        My Learning
+                    </a>
+</li>
+<li class="h-full flex items-center">
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center h-full px-2" href="#">
+                        Certificates
+                    </a>
+</li>
+<li class="h-full flex items-center">
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#003366] hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center h-full px-2" href="#">
+                        Resources
+                    </a>
+</li>
+</ul>
+<!-- Actions -->
+<div class="flex items-center gap-4">
+<button class="text-[#003366] dark:text-blue-400 font-['Inter'] text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors px-4 py-2 rounded-lg">
+                    Login
+                </button>
+<button class="bg-[#003366] text-white font-['Inter'] text-sm font-medium hover:opacity-90 transition-colors px-4 py-2 rounded-lg">
+                    Register
+                </button>
+</div>
+</nav>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative w-full bg-surface-container-low border-b border-outline-variant flex flex-col items-center justify-center py-xl px-md overflow-hidden">
+<!-- Decorative Background Element -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 80% 20%, #003366 0%, transparent 40%);"></div>
+<div class="relative z-10 max-w-container-max w-full flex flex-col items-center text-center">
+<span class="bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm px-sm py-xs rounded-full mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">campaign</span>
+                    Spring Semester Registration Open
+                </span>
+<h1 class="font-h1 text-h1 text-on-surface mb-sm max-w-3xl">
+                    Discover and register for upcoming academic workshops.
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-lg">
+                    Enhance your skills, collaborate with peers, and learn from industry experts in structured, distraction-free environments.
+                </p>
+<!-- Search & Filter Bar (Glassmorphism inspired) -->
+<div class="bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant rounded-full p-xs flex flex-col md:flex-row items-center gap-xs md:gap-sm w-full max-w-4xl shadow-sm">
+<!-- Search Input -->
+<div class="flex-1 flex items-center gap-sm px-sm py-sm w-full">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none outline-none font-body-md text-body-md text-on-surface w-full focus:ring-0 placeholder-on-surface-variant/70" placeholder="Search topics, instructors, or keywords" type="text"/>
+</div>
+<div class="hidden md:block w-px h-8 bg-outline-variant"></div>
+<!-- Date Filter -->
+<button class="flex items-center gap-xs px-sm py-sm text-on-surface-variant hover:text-on-surface transition-colors font-label-md text-label-md w-full md:w-auto justify-center md:justify-start">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+                        Any Date
+                        <span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</button>
+<div class="hidden md:block w-px h-8 bg-outline-variant"></div>
+<!-- Topic Filter -->
+<button class="flex items-center gap-xs px-sm py-sm text-on-surface-variant hover:text-on-surface transition-colors font-label-md text-label-md w-full md:w-auto justify-center md:justify-start">
+<span class="material-symbols-outlined text-[20px]">category</span>
+                        All Topics
+                        <span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</button>
+<!-- Search Action -->
+<button class="bg-primary text-on-primary font-label-md text-label-md px-lg py-sm rounded-full hover:bg-primary/90 transition-colors w-full md:w-auto mt-xs md:mt-0">
+                        Find Workshops
+                    </button>
+</div>
+</div>
+</section>
+<!-- Workshop Grid Section (Bento Layout) -->
+<section class="w-full px-md py-xl bg-background">
+<div class="max-w-container-max mx-auto">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="font-h2 text-h2 text-on-surface mb-xs">Featured Workshops</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Seats are filling up quickly for these sessions.</p>
+</div>
+<button class="font-label-md text-label-md text-primary flex items-center gap-xs hover:text-on-primary-fixed-variant transition-colors">
+                        View All
+                        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+<!-- Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Card 1: Featured (Large) -->
+<div class="md:col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl border border-secondary-fixed flex flex-col md:flex-row overflow-hidden hover:shadow-sm transition-shadow">
+<div class="md:w-2/5 h-48 md:h-auto relative bg-surface-container-high">
+<img alt="Workshop Image" class="absolute inset-0 w-full h-full object-cover" data-alt="modern university lecture hall with bright natural light, empty chairs, and a clean presentation screen, academic setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAandot0kPQPU_3NqT4pUPGi2j3zo1kvHrI3bDA9OPLQi3-kKqz6YrTv_PQfhWEArc3qxT5PVV5Zc0t4djJ-BrYJlUUlOGAKXR2KJWqYNJl3EDnYOzWqABg2ol8Nl3uAxbhYKG3l0newQ9o32RnL09T06SwBsP1aNZ_ERDT0z3cKCxQwoS2OQ0oDJRGvyxc_h4cuRAbpC1lPcIb6ydF9Zzz86NOpBPPtxU91_Zk2g2hJXmneQ_NWcvqocbkD8q6PsINZ136FGzRCBc"/>
+<div class="absolute top-sm left-sm bg-surface-container-lowest/90 backdrop-blur-sm text-primary font-label-sm text-label-sm px-sm py-xs rounded-full border border-secondary-fixed">
+                                Featured
+                            </div>
+</div>
+<div class="md:w-3/5 p-lg flex flex-col justify-between">
+<div>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-sm py-xs rounded-full inline-block mb-sm">Data Science</span>
+<h3 class="font-h3 text-h3 text-on-surface mb-sm">Advanced Machine Learning Methodologies in Academic Research</h3>
+<div class="flex flex-col gap-xs mb-md">
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                                        Dr. Eleanor Vance, PhD
+                                    </span>
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+                                        Turing Hall, Room 402
+                                    </span>
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">schedule</span>
+                                        Oct 15, 2023 • 14:00 - 17:00
+                                    </span>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-xs">
+<span>Seats Remaining</span>
+<span class="text-primary font-semibold">5 / 40</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mb-md">
+<div class="bg-primary h-2 rounded-full" style="width: 87%"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-h3 text-h3 text-on-surface">$45.00</span>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary/90 transition-colors">
+                                        View Details
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Standard -->
+<div class="md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-secondary-fixed flex flex-col overflow-hidden hover:shadow-sm transition-shadow">
+<div class="p-md flex-1 flex flex-col">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-sm py-xs rounded-full w-fit mb-sm">Ethics &amp; Policy</span>
+<h3 class="font-h3 text-h3 text-on-surface mb-sm line-clamp-2">AI Ethics: Navigating Bias and Fairness in Automated Systems</h3>
+<div class="flex flex-col gap-xs mb-md mt-auto">
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                                    Prof. Marcus Thorne
+                                </span>
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+                                    Virtual Room B
+                                </span>
+</div>
+<div class="mt-auto">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-xs">
+<span>Seats Remaining</span>
+<span class="text-primary font-semibold">12 / 50</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mb-md">
+<div class="bg-primary h-2 rounded-full" style="width: 76%"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-tertiary-container bg-tertiary-fixed/30 px-sm py-xs rounded-full">Free</span>
+<button class="bg-surface text-primary border border-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary hover:text-on-primary transition-colors">
+                                        View Details
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Standard -->
+<div class="md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-secondary-fixed flex flex-col overflow-hidden hover:shadow-sm transition-shadow relative">
+<!-- Luminous Glow Effect for AI Summary / special tag -->
+<div class="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-primary-fixed-dim to-primary z-10"></div>
+<div class="absolute inset-0 bg-gradient-to-br from-primary-fixed/5 to-transparent pointer-events-none"></div>
+<div class="p-md flex-1 flex flex-col relative z-20">
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-sm py-xs rounded-full w-fit mb-sm">Design</span>
+<h3 class="font-h3 text-h3 text-on-surface mb-sm line-clamp-2">Principles of Cognitive UI/UX for Educational Platforms</h3>
+<div class="flex flex-col gap-xs mb-md mt-auto">
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                                    Sarah Jenkins, Lead Designer
+                                </span>
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+                                    Design Studio 1
+                                </span>
+</div>
+<div class="mt-auto">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-xs">
+<span>Seats Remaining</span>
+<span class="text-primary font-semibold">2 / 20</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mb-md">
+<div class="bg-error h-2 rounded-full" style="width: 90%"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-h3 text-h3 text-on-surface">$120.00</span>
+<button class="bg-surface text-primary border border-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary hover:text-on-primary transition-colors">
+                                        View Details
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4: Standard -->
+<div class="md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-secondary-fixed flex flex-col overflow-hidden hover:shadow-sm transition-shadow">
+<div class="p-md flex-1 flex flex-col">
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-sm py-xs rounded-full w-fit mb-sm">Methodology</span>
+<h3 class="font-h3 text-h3 text-on-surface mb-sm line-clamp-2">Qualitative Research Synthesis Workshop</h3>
+<div class="flex flex-col gap-xs mb-md mt-auto">
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                                    Dr. Robert Kim
+                                </span>
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+                                    Library Seminar Room C
+                                </span>
+</div>
+<div class="mt-auto">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-xs">
+<span>Seats Remaining</span>
+<span class="text-primary font-semibold">28 / 30</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mb-md">
+<div class="bg-primary h-2 rounded-full" style="width: 10%"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-tertiary-container bg-tertiary-fixed/30 px-sm py-xs rounded-full">Free</span>
+<button class="bg-surface text-primary border border-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary hover:text-on-primary transition-colors">
+                                        View Details
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 5: Standard -->
+<div class="md:col-span-6 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-secondary-fixed flex flex-col overflow-hidden hover:shadow-sm transition-shadow">
+<div class="p-md flex-1 flex flex-col">
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-sm py-xs rounded-full w-fit mb-sm">Technology</span>
+<h3 class="font-h3 text-h3 text-on-surface mb-sm line-clamp-2">Introduction to Python for Statistical Analysis</h3>
+<div class="flex flex-col gap-xs mb-md mt-auto">
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                                    Emily Chen, MSc
+                                </span>
+<span class="flex items-center gap-xs font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">location_on</span>
+                                    Computer Lab 2
+                                </span>
+</div>
+<div class="mt-auto">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-xs">
+<span>Seats Remaining</span>
+<span class="text-primary font-semibold">15 / 25</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mb-md">
+<div class="bg-primary h-2 rounded-full" style="width: 40%"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-h3 text-h3 text-on-surface">$25.00</span>
+<button class="bg-surface text-primary border border-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary hover:text-on-primary transition-colors">
+                                        View Details
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Mobile BottomNavBar Component from JSON -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] docked full-width bottom-0">
+<!-- Active Tab: Schedule (Closest intent to Workshops/Landing) -->
+<a class="flex flex-col items-center justify-center text-[#003366] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl p-1 font-['Inter'] text-[10px] font-medium Active: scale-95 transition-all duration-150 w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="mt-1">Schedule</span>
+</a>
+<!-- Inactive Tabs -->
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 font-['Inter'] text-[10px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl p-1 w-16" href="#">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+<span class="mt-1">Scanner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 font-['Inter'] text-[10px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl p-1 w-16" href="#">
+<span class="material-symbols-outlined">assignment_ind</span>
+<span class="mt-1">Staff</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 font-['Inter'] text-[10px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl p-1 w-16" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
