@@ -51,7 +51,12 @@ export const workshopService = {
 
   // Process payment
   initiatePayment: async (registrationId, paymentData) => {
-    const response = await api.post(`/registrations/${registrationId}/payment`, paymentData);
+    const idempotencyKey = generateIdempotencyKey();
+    const response = await api.post(`/registrations/${registrationId}/payment`, paymentData, {
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+    });
     return response.data;
   },
 

@@ -5,6 +5,7 @@ import {
   lockSeat,
   setSeatLock,
   releaseSeat,
+  initializeSeatCount,
 } from '../services/seatService.js';
 import { generateQRCode } from '../services/qrCodeService.js';
 import { initiatePayment } from '../services/paymentService.js';
@@ -107,7 +108,7 @@ export async function getWorkshopSeats(req, res, next) {
 export async function registerWorkshop(req, res, next) {
   try {
     const { workshopId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.user?.id || 2; // For testing, default to user ID 2 if not authenticated
     const idempotencyKey = req.idempotencyKey;
 
     // Validate user authentication
@@ -138,6 +139,12 @@ export async function registerWorkshop(req, res, next) {
 
     if (existingRegistration) {
       throw new AppError('You have already registered for this workshop', 409);
+    }
+
+    // Lazy-load seat data into Redis if needed
+    const cachedSeats = await getAvailableSeats(workshopId);
+    if (cachedSeats === null) {
+      await initializeSeatCount(workshopId, workshop.available_seats);
     }
 
     // Try to lock a seat

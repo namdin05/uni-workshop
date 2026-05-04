@@ -135,7 +135,8 @@ export default function WorkshopCheckout() {
 
       if (response.paymentUrl) {
         // Redirect to payment gateway
-        window.location.href = response.paymentUrl;
+        //window.location.href = response.paymentUrl; 
+        window.location.href = paymentData.redirectUrl; // For testing, redirect to success page directly
       } else {
         setError('Không thể khởi tạo thanh toán. Vui lòng thử lại.');
       }

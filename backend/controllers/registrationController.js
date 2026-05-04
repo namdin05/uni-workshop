@@ -105,6 +105,13 @@ export async function initiateRegistrationPayment(req, res, next) {
         created_at: new Date(),
         updated_at: new Date(),
       });
+    
+    // ==========================================
+    // BYPASS TEST UI: Tự động đánh dấu đã thanh toán
+    await db('registrations')
+      .where('id', registrationId)
+      .update({ status: 'confirmed' });
+    // ==========================================
 
     console.log('[PAYMENT] Initiated payment:', {
       registrationId,

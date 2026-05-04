@@ -122,7 +122,7 @@ export default function PaymentSuccess() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Ngày:</span>
-                  <span className="font-medium text-slate-900">{formatDate(registration.workshopDate)}</span>
+                  <span className="font-medium text-slate-900">{formatDate(registration.start_time)}</span>
                 </div>
               </div>
             </div>
