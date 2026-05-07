@@ -7,6 +7,8 @@ import workshopRoutes from './routes/workshop.route.js';
 import publicWorkshopRoutes from './routes/public.workshop.route.js';
 import paymentRoutes from './routes/payment.route.js';
 import checkinRoutes from './routes/checkin.route.js';
+import aiRoutes from './routes/ai.route.js';
+import roomRoutes from './routes/room.route.js';
 
 import { verifyToken, authorizeRole } from './middlewares/auth.middlewares.js';
 
@@ -27,6 +29,12 @@ app.use('/api/workshops', publicWorkshopRoutes);
 // Demo payment gateway endpoints
 app.use('/api/payments', paymentRoutes);
 
+// AI Summary endpoints
+app.use('/api/ai', aiRoutes);
+
+// Rooms endpoints
+app.use('/api/rooms', roomRoutes);
+
 // Check-in endpoints for organizer mobile app
 app.use('/api/checkin', verifyToken, authorizeRole(['organizer']), checkinRoutes);
 
@@ -38,5 +46,5 @@ app.use('/api/admin/workshops',
 );
 
 app.listen(PORT, () => {
-    console.log(`🚀 UniHub Backend đang chạy tại http://localhost:${PORT}`);
+    console.log(`🚀 UniHub Backend đang chạy tại http://127.0.0.1:${PORT}`);
 });

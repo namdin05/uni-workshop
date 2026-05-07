@@ -112,7 +112,8 @@ export const createWorkshop = async (req, res) => {
         const payload = req.body;
         const { data, error } = await supabaseAdmin
             .from('workshops')
-            .insert([payload]);
+            .insert([payload])
+            .select();
 
         if (error) throw error;
         return res.status(201).json({ workshop: data[0] });

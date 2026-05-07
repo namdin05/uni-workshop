@@ -1,67 +1,83 @@
-import asyncio
 import os
-from dotenv import load_dotenv
+import asyncio
+import requests
+import fitz
+from groq import Groq
+from io import BytesIO
 from bullmq import Worker
+from dotenv import load_dotenv
+from supabase import create_client
 
-# Load biến môi trường từ file .env
 load_dotenv()
 
-# Lấy URL Redis (Đổi rediss:// thành redis:// nếu thư viện yêu cầu bóc tách url, 
-# nhưng với Upstash dùng rediss:// trong biến môi trường là chuẩn nhất)
-redis_url = os.getenv("REDIS_URL")
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+supabase = create_client(
+    os.getenv("SUPABASE_URL"), 
+    os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+)
 
-async def process_pdf_job(job, job_token):
-    """
-    Hàm này sẽ tự động chạy mỗi khi có 1 job mới được đẩy vào Queue
-    """
-    print(f"\n[AI WORKER] 🚀 Nhận được yêu cầu mới! Job ID: {job.id}")
+async def process_pdf_job(job, job_token): 
+    workshop_id = job.data.get('workshopId') 
+    file_url = job.data.get('fileUrl')
+    
+    print(f"[*] Đang xử lý tài liệu cho Workshop ID: {workshop_id}")
     
     try:
-        # Lấy data do Express gửi sang
-        workshop_id = job.data.get('workshopId')
-        file_path = job.data.get('filePath')
+        # 1. Tải file PDF từ Supabase Storage 
+        response = requests.get(file_url)
+        response.raise_for_status()
         
-        print(f"[-] Đang xử lý workshop ID: {workshopId}")
-        print(f"[-] Đường dẫn file PDF: {file_path}")
+        # 2. Trích xuất text 
+        pdf_data = BytesIO(response.content)
+        doc = fitz.open(stream=pdf_data, filetype="pdf")
+        text_content = "".join([page.get_text() for page in doc])
+        doc.close()
+
+        # 3. Gọi Groq AI tóm tắt 
+        print("[-] Đang gọi Groq AI tóm tắt nội dung...")
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Hãy tóm tắt nội dung hội thảo sau đây một cách chuyên nghiệp để hiển thị trên website. Trình bày súc tích dưới dạng đoạn văn hoặc 3 gạch đầu dòng không quá 200 từ"
+                },
+                {
+                    "role": "user",
+                    "content": f"Tài liệu hội thảo:\n\n{text_content[:20000]}"
+                }
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.5,
+        )
         
-        # TODO: Sẽ viết code đọc PDF bằng PyMuPDF ở đây
-        await asyncio.sleep(2) # Giả lập thời gian AI đang suy nghĩ...
+        summary_result = chat_completion.choices[0].message.content
+
+        # 4. CẬP NHẬT TRỰC TIẾP VÀO CỘT DESCRIPTION 
+        if workshop_id:
+            print(f"[-] Đang cập nhật database cho workshop {workshop_id}...")
+            supabase.table("workshops").update({"description": summary_result}).eq("id", workshop_id).execute()
+        else:
+            print(f"[-] Đang tạo mới workshop.")
+            
+        print(f"[+] Hoàn thành quá trình tóm tắt!")
         
-        # TODO: Sẽ viết code gọi API tóm tắt ở đây
-        
-        print(f"[AI WORKER] ✅ Xử lý xong Job {job.id}!\n")
-        return "Hoàn thành tóm tắt"
-        
+        return {"summary": summary_result}
+
     except Exception as e:
-        print(f"[AI WORKER] ❌ Lỗi xử lý Job {job.id}: {str(e)}")
+        print(f"[!] Lỗi Worker: {str(e)}")
         raise e
 
 async def main():
-    print("=========================================")
-    print("🤖 AI Summary Worker đang khởi động...")
-    print("=========================================")
+    redis_url = os.getenv("REDIS_URL")
+    print("🚀 Python AI Worker đang trực chờ (Update description mode)...")
     
-    # Thêm dòng này để kiểm tra xem .env đã load thành công chưa
-    if not redis_url:
-        print("❌ LỖI: Không tìm thấy REDIS_URL! Hãy kiểm tra lại file .env")
-        return
+    worker = Worker(
+        "pdf-summary-queue", 
+        process_pdf_job, 
+        {"connection": redis_url}
+    )
     
-    # Cấu hình kết nối CHUẨN của BullMQ Python (Sử dụng key "connection")
-    redis_opts = {
-        "connection": redis_url
-    }
-    
-    # Khởi tạo Worker
-    worker = Worker("pdf-summary-queue", process_pdf_job, redis_opts)
-    
-    print("✅ Đã kết nối Redis Upstash! Đang chờ việc (Bấm Ctrl+C để thoát)...")
-    
-    # Vòng lặp vô hạn để giữ script luôn chạy
-    while True:
-        await asyncio.sleep(1)
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\n👋 Worker đã tắt an toàn.")
+    asyncio.run(main())
