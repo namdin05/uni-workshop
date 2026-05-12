@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase.js';
+import { supabase, supabaseAdmin } from '../utils/supabase.js';
 
 const loadUserProfile = async (authId) => {
     const { data, error } = await supabase
@@ -16,6 +16,23 @@ export const register = async (req, res) => {
     const { email, password, fullName, studentId } = req.body;
 
     try {
+        const { data: existingUser, error: checkError } = await supabaseAdmin
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .single();
+        
+        if (checkError || !existingUser) {
+            return res.status(403).json({ 
+                message: 'Email của bạn không thuộc hệ thống nhà trường. Vui lòng liên hệ phòng Đào tạo!' 
+            });
+        }
+
+        if (existingUser.auth_id) {
+            return res.status(400).json({ 
+                message: 'Tài khoản này đã được đăng ký. Vui lòng chuyển sang trang Đăng nhập!' 
+            });
+        }
         // 1. Tạo tài khoản trong Supabase Auth (Trả về UUID)
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
@@ -25,15 +42,13 @@ export const register = async (req, res) => {
         if (authError) throw authError;
 
         // 2. Lưu vào bảng users (id sẽ tự tăng, auth_id lưu UUID)
-        const { error: dbError } = await supabase
+        const { error: dbError } = await supabaseAdmin
             .from('users')
-            .insert({
-                auth_id: authData.user.id, // Mapping UUID vào đây
-                email,
-                full_name: fullName,
-                student_id: studentId,
-                role: 'student'
-            });
+            .update({
+                auth_id: authData.user.id,
+                full_name: fullName || existingUser.full_name,
+            })
+            .eq('id', existingUser.id);
 
         if (dbError) throw dbError;
 

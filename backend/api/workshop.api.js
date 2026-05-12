@@ -122,14 +122,43 @@ export const createWorkshop = async (req, res) => {
     }
 };
 
+import { Readable } from 'stream';
+import csv from 'csv-parser';
+
 export const uploadCsv = async (req, res) => {
     try {
-        // Expect CSV content in req.body.csv (text) for simplicity
-        const csv = req.body.csv;
-        if (!csv) return res.status(400).json({ message: 'Missing csv content' });
+        const csvText = req.body.csv;
+        if (!csvText) return res.status(400).json({ message: 'Missing CSV data' });
 
-        // For demo: do not parse fully; respond accepted
-        return res.status(202).json({ message: 'CSV received, processing queued' });
+        const records = [];
+        const stream = Readable.from(csvText);
+
+        stream
+            .pipe(csv())
+            .on('data', (row) => {
+                records.push({
+                    student_id: row.student_id,
+                    email: row.email,
+                    full_name: row.full_name,
+                    role: 'student'
+                });
+            })
+            .on('end', async () => {
+                try {
+                    const { error } = await supabaseAdmin
+                        .from('users')
+                        .upsert(records, { onConflict: 'student_id' });
+
+                    if (error) throw error;
+
+                    return res.status(200).json({ 
+                        success: true, 
+                        processed: records.length 
+                    });
+                } catch (dbError) {
+                    return res.status(500).json({ message: dbError.message });
+                }
+            });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
