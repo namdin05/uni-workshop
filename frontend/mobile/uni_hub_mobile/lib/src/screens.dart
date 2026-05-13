@@ -100,13 +100,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           const Icon(Icons.qr_code_scanner, size: 64, color: Color(0xFF003366)),
                           const SizedBox(height: 16),
                           const Text(
-                            'UniHub Organizer Check-in',
+                            'UniHub Staff Check-in',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Chỉ organizer được phép đăng nhập. Dữ liệu check-in được lưu cục bộ rồi đồng bộ khi có mạng.',
+                            'Chỉ staff được phép đăng nhập. Dữ liệu check-in được lưu cục bộ rồi đồng bộ khi có mạng.',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.grey.shade700),
                           ),
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: const InputDecoration(
-                              labelText: 'Email organizer',
+                              labelText: 'Email staff',
                               prefixIcon: Icon(Icons.alternate_email),
                             ),
                             validator: (value) => value == null || value.trim().isEmpty ? 'Nhập email' : null,
@@ -531,8 +531,8 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         _HeaderCard(
-          title: 'Organizer profile',
-          subtitle: 'Ứng dụng chỉ dành cho role organizer. Mọi check-in đều được lưu cục bộ trước khi đồng bộ.',
+          title: 'Staff profile',
+          subtitle: 'Ứng dụng chỉ dành cho role staff. Mọi check-in đều được lưu cục bộ trước khi đồng bộ.',
           icon: Icons.badge_outlined,
           accentColor: const Color(0xFF003366),
         ),

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchWorkshops, loadSession } from '../lib/auth';
+import { fetchAdminWorkshops, fetchPaymentGatewayStatus, loadSession, togglePaymentGateway, warmUpWorkshopCache } from '../api/auth';
 import AddWorkshopModal from '../components/AddWorkshopModal';
 
 export default function AdminWorkshops() {
@@ -8,12 +8,20 @@ export default function AdminWorkshops() {
   const [workshops, setWorkshops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [warmingUp, setWarmingUp] = useState(false);
+  const [warmUpMessage, setWarmUpMessage] = useState('');
+  const [warmUpError, setWarmUpError] = useState('');
+  const [gateway, setGateway] = useState(null);
+  const [gatewayLoading, setGatewayLoading] = useState(true);
+  const [gatewayUpdating, setGatewayUpdating] = useState(false);
+  const [gatewayMessage, setGatewayMessage] = useState('');
+  const [gatewayError, setGatewayError] = useState('');
 
   useEffect(() => {
     let active = true;
     async function load() {
       try {
-        const res = await fetchWorkshops();
+        const res = await fetchAdminWorkshops(session?.token);
         if (active) setWorkshops(res.workshops || []);
       } catch (err) {
         //
@@ -25,12 +33,73 @@ export default function AdminWorkshops() {
     return () => { active = false };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadGateway() {
+      try {
+        const res = await fetchPaymentGatewayStatus();
+        if (active) setGateway(res.gateway || null);
+      } catch {
+        if (active) setGateway(null);
+      } finally {
+        if (active) setGatewayLoading(false);
+      }
+    }
+
+    loadGateway();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   if (role !== 'organizer' && role !== 'admin') {
     return <div className="text-sm text-rose-600 p-6">Access denied: Organizer role required.</div>;
   }
 
   function handleSuccess(newWorkshop) {
     setWorkshops((cur) => [...cur, newWorkshop]);
+  }
+
+  async function handleWarmUp() {
+    if (!session?.token) {
+      setWarmUpError('Missing admin session. Please sign in again.');
+      return;
+    }
+
+    setWarmingUp(true);
+    setWarmUpMessage('');
+    setWarmUpError('');
+
+    try {
+      const result = await warmUpWorkshopCache(session.token);
+      setWarmUpMessage(result.message || 'Warm up completed successfully.');
+    } catch (err) {
+      setWarmUpError(err.message || 'Failed to warm up workshop cache');
+    } finally {
+      setWarmingUp(false);
+    }
+  }
+
+  async function handleToggleGateway() {
+    setGatewayUpdating(true);
+    setGatewayMessage('');
+    setGatewayError('');
+
+    try {
+      if (!session?.token) {
+        setGatewayError('Missing admin session. Please sign in again.');
+        return;
+      }
+      const isNormalMode = gateway?.mode === 'closed';
+      const result = await togglePaymentGateway(!isNormalMode, session.token);
+      setGateway(result.gateway || null);
+      setGatewayMessage(result.message || 'Trạng thái cổng đã được cập nhật.');
+    } catch (err) {
+      setGatewayError(err.message || 'Unable to update gateway state.');
+    } finally {
+      setGatewayUpdating(false);
+    }
   }
 
   function getEnrolledCount(workshop) {
@@ -69,6 +138,15 @@ export default function AdminWorkshops() {
             <span className="material-symbols-outlined text-sm">download</span>
             Export Report
           </button>
+          <button
+            type="button"
+            onClick={handleWarmUp}
+            disabled={warmingUp}
+            className="ui-btn ui-btn-surface px-4 py-2 rounded-lg font-label-md border border-outline-variant flex items-center gap-2 whitespace-nowrap disabled:opacity-70"
+          >
+            <span className="material-symbols-outlined text-sm">local_fire_department</span>
+            {warmingUp ? 'Warming up...' : 'Warm up cache'}
+          </button>
         </div>
       </div>
 
@@ -84,16 +162,6 @@ export default function AdminWorkshops() {
             <div className="flex justify-between items-start mb-4 relative z-10">
               <p className="font-label-md text-on-surface-variant uppercase tracking-wider">Total Registrations</p>
               <span className="material-symbols-outlined text-primary-container bg-primary-fixed-dim/20 p-2 rounded-lg">group</span>
-            </div>
-            <div className="relative z-10">
-              <h2 className="font-h2 text-on-surface">{totalRegistrations}</h2>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                  <span className="material-symbols-outlined text-xs mr-1">trending_up</span>
-                  +12.5%
-                </span>
-                <span className="font-label-sm text-on-surface-variant">vs last month</span>
-              </div>
             </div>
           </div>
 
@@ -168,9 +236,14 @@ export default function AdminWorkshops() {
                       <h4 className="font-label-md text-on-surface truncate">{w.title}</h4>
                       <p className="font-label-sm text-on-surface-variant truncate">{w.speaker_name || 'Instructor TBA'}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-2">
                       <p className="font-label-md text-on-surface">{getEnrolledCount(w)} enrolled</p>
-                      <p className="font-label-sm text-green-600 text-[10px]">Active</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-semibold border ${w.status === 'published' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : w.status === 'draft' ? 'bg-surface-container text-on-surface-variant border-outline-variant' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                          {w.status || 'draft'}
+                        </span>
+                        <a href={`/admin/workshops/${w.id}/edit`} className="ui-btn ui-btn-ghost text-xs px-3 py-1 rounded">Edit</a>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -193,7 +266,71 @@ export default function AdminWorkshops() {
                 <span className="material-symbols-outlined">group</span>
                 Manage Students
               </button>
+              <button
+                type="button"
+                onClick={handleWarmUp}
+                disabled={warmingUp}
+                className="ui-btn ui-btn-surface w-full font-label-md py-3 px-4 rounded-lg flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                <span className="material-symbols-outlined">local_fire_department</span>
+                {warmingUp ? 'Warming up...' : 'Warm up cache'}
+              </button>
             </div>
+
+            <div className="mt-6 rounded-xl border border-outline-variant bg-surface-container-low p-4">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h4 className="font-label-md text-on-surface">Payment Gateway</h4>
+                  <p className="font-label-sm text-on-surface-variant mt-1">
+                    {gatewayLoading ? 'Loading...' : 'Quản lý trạng thái cổng'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-4 bg-surface rounded-lg border border-outline-variant">
+                <span className={`font-label-md text-label-md px-3 py-1 rounded-full ${gateway?.mode === 'closed' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                  {gateway?.mode === 'closed' ? '✓ NORMAL' : '⚠ TIMEOUT'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleToggleGateway}
+                  disabled={gatewayUpdating}
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                    gateway?.mode === 'closed' ? 'bg-emerald-500' : 'bg-rose-500'
+                  } ${gatewayUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${
+                      gateway?.mode === 'closed' ? 'translate-x-1' : 'translate-x-7'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {gatewayMessage ? (
+                <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  {gatewayMessage}
+                </div>
+              ) : null}
+
+              {gatewayError ? (
+                <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {gatewayError}
+                </div>
+              ) : null}
+            </div>
+
+            {warmUpMessage ? (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                {warmUpMessage}
+              </div>
+            ) : null}
+
+            {warmUpError ? (
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {warmUpError}
+              </div>
+            ) : null}
 
             {/* AI Summary */}
             <div className="mt-6 rounded-xl border-l-2 border-primary-container p-4 bg-gradient-to-r from-surface to-primary-fixed/5 border border-y-secondary-fixed border-r-secondary-fixed">

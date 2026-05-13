@@ -6,5 +6,6 @@ const router = express.Router();
 
 router.get('/profile', verifyToken, userApi.getProfile);
 router.get('/registrations', verifyToken, userApi.getMyRegistrations);
+router.get('/students', userApi.listStudents);
 
 export default router;

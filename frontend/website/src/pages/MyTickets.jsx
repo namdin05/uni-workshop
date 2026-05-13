@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import QRCode from 'qrcode.react';
-import { loadSession, fetchMyRegistrations } from '../lib/auth';
+import { loadSession, fetchMyRegistrations } from '../api/auth';
 
 const QUICK_ACTIONS = [
   { label: 'Open Workshops', href: '/workshops', icon: 'calendar_today' },
@@ -102,6 +102,15 @@ export default function MyTickets() {
             <div className="space-y-4">
               {tickets.map((ticket) => {
                 const workshop = ticket.workshops;
+                const now = new Date();
+                const start = workshop.start_time ? new Date(workshop.start_time) : null;
+                const end = workshop.end_time ? new Date(workshop.end_time) : null;
+                let timelineStatus = '';
+                if (start && end) {
+                  if (now < start) timelineStatus = 'Upcoming';
+                  else if (now >= start && now < end) timelineStatus = 'Ongoing';
+                  else timelineStatus = 'Ended';
+                }
                 const startDate = new Date(workshop.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const startTime = new Date(workshop.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 const endTime = new Date(workshop.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -132,6 +141,11 @@ export default function MyTickets() {
                           >
                             {ticket.checked_in_at ? 'Checked In' : ticket.status === 'confirmed' ? 'Ready' : 'Pending'}
                           </span>
+                          {timelineStatus && (
+                            <span className="ml-3 inline-flex items-center rounded-full px-3 py-1 font-label-sm text-label-sm border bg-surface-container text-on-surface-variant border-outline-variant">
+                              {timelineStatus}
+                            </span>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

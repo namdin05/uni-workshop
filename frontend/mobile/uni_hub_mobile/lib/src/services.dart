@@ -477,8 +477,8 @@ class CheckinRepository {
 
   Future<AuthSession> login(String email, String password) async {
     final session = await apiClient.login(email, password);
-    if (session.profile.role != 'organizer') {
-      throw Exception('Chỉ organizer mới được phép vào ứng dụng này');
+    if (session.profile.role != 'staff') {
+      throw Exception('Chỉ staff mới được phép vào ứng dụng này');
     }
 
     await sessionStore.save(session);

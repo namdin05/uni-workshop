@@ -132,16 +132,7 @@ export default function WorkshopDetails() {
   const location = workshop.location || workshop.room || 'Location TBA';
   const priceLabel = workshop.is_free ? 'Free' : `$${workshop.price ?? '0.00'}`;
   const gatewayMode = paymentGateway?.mode ?? 'closed';
-  const paymentLocked = !workshop.is_free && (gatewayMode === 'open' || (gatewayMode === 'half-open' && !paymentGateway?.probeAvailable));
-  const paymentStatusLabel = !workshop.is_free
-    ? gatewayMode === 'open'
-      ? 'Thanh toán tạm tắt'
-      : gatewayMode === 'half-open'
-        ? paymentGateway?.probeAvailable
-          ? 'Half-open: có thể retry'
-          : 'Half-open: đang chờ retry'
-        : 'Thanh toán khả dụng'
-    : 'Đăng ký miễn phí';
+  const paymentLocked = !workshop.is_free && gatewayMode === 'open';
 
   return (
     <main className="max-w-container-max mx-auto px-8 py-12">
@@ -150,8 +141,9 @@ export default function WorkshopDetails() {
         Back
       </a>
 
+      {/* Thông tin chính của Workshop */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-12 items-start">
-        <div className="lg:col-span-7 flex flex-col gap-6">
+        <div className="lg:col-span-12 flex flex-col gap-6">
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex items-center px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm border border-primary-fixed-dim">
               {workshop.category || 'Workshop'}
@@ -165,14 +157,14 @@ export default function WorkshopDetails() {
 
           <div>
             <h1 className="font-h1 text-h1 text-primary mb-4">{workshop.title}</h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant">
+            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-4xl">
               {workshop.summary || 'Details for this workshop will be updated soon.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 py-6 border-y border-outline-variant/30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 py-6 border-y border-outline-variant/30">
             <div className="flex items-center gap-3 text-on-surface">
-              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined">calendar_today</span>
               </div>
               <div>
@@ -181,7 +173,7 @@ export default function WorkshopDetails() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-on-surface">
-              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined">schedule</span>
               </div>
               <div>
@@ -190,7 +182,7 @@ export default function WorkshopDetails() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-on-surface">
-              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined">location_on</span>
               </div>
               <div>
@@ -199,7 +191,7 @@ export default function WorkshopDetails() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-on-surface">
-              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined">group</span>
               </div>
               <div>
@@ -210,33 +202,11 @@ export default function WorkshopDetails() {
               </div>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-4 mt-2">
-            <button
-              onClick={handleRegister}
-              disabled={!workshop.is_free && paymentLocked}
-              className="ui-btn ui-btn-primary font-label-md text-label-md px-8 py-3.5 rounded-lg flex items-center gap-2 shadow-sm"
-            >
-              <span>{workshop.is_free ? 'Register Now' : 'Thanh toán demo'}</span>
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </button>
-            {!workshop.is_free && (
-              <div className={`inline-flex items-center gap-2 rounded-lg border px-4 py-3 font-label-md text-label-md ${paymentLocked ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
-                <span className="material-symbols-outlined text-[18px]">payments</span>
-                {paymentStatusLabel}
-              </div>
-            )}
-          </div>
-
-          {status === 'loading' && <p className="font-body-md text-body-md text-on-surface-variant">Registering...</p>}
-          {status === 'not-authenticated' && <p className="font-body-md text-body-md text-error">Please sign in first.</p>}
-          {status === 'registered' && <p className="font-body-md text-body-md text-green-700">Successfully registered.</p>}
-          {status === 'error' && <p className="font-body-md text-body-md text-error">Registration failed. Try again.</p>}
-          {!workshop.is_free && paymentLocked && <p className="font-body-md text-body-md text-rose-700">{paymentGateway?.message || 'Hệ thống thanh toán đang bảo trì, vui lòng thử lại sau.'}</p>}
         </div>
       </section>
 
-      <section className="border-l-[3px] border-primary-fixed rounded-xl p-8 mb-16 bg-gradient-to-r from-surface to-primary-fixed/5 shadow-[0_0_15px_rgba(0,51,102,0.08)] relative overflow-hidden">
+      {/* AI Syllabus */}
+      <section className="border-l-[3px] border-primary-fixed rounded-xl p-8 mb-12 bg-gradient-to-r from-surface to-primary-fixed/5 shadow-[0_0_15px_rgba(0,51,102,0.08)] relative overflow-hidden">
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none"></div>
         <div className="flex items-start gap-6 relative z-10">
           <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-md">
@@ -262,37 +232,55 @@ export default function WorkshopDetails() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
-        <div className="md:col-span-4 flex flex-col gap-gutter">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center border-4 border-surface-container mb-4">
-              <span className="material-symbols-outlined text-3xl">person</span>
-            </div>
-            <h3 className="font-h3 text-h3 text-primary mb-1">{instructorName}</h3>
-            <p className="font-label-md text-label-md text-primary-container mb-4">Lead Instructor</p>
-            <p className="font-body-md text-body-md text-on-surface-variant text-sm leading-relaxed mb-6">
-              This instructor specializes in guiding students through hands-on projects and applied research.
-            </p>
-            <button className="ui-btn ui-btn-surface w-full py-2 font-label-md text-label-md rounded-lg border border-outline-variant/50">
-              View Profile
-            </button>
+      {/* Diễn giả & Sơ đồ phòng - Ngang hàng nhau */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-12">
+        {/* Card Diễn giả */}
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col items-center text-center h-full">
+          <div className="w-24 h-24 rounded-full bg-surface-container flex items-center justify-center border-4 border-surface-container mb-4 shrink-0">
+            <span className="material-symbols-outlined text-3xl">person</span>
           </div>
+          <h3 className="font-h3 text-h3 text-primary mb-1">{instructorName}</h3>
+          <p className="font-label-md text-label-md text-primary-container mb-4">Lead Instructor</p>
+          <p className="font-body-md text-body-md text-on-surface-variant text-sm leading-relaxed mb-6 flex-1">
+            This instructor specializes in guiding students through hands-on projects and applied research.
+          </p>
+        </div>
 
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
-            <h3 className="font-label-md text-label-md text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">floor</span>
-              Room Layout
-            </h3>
-            <div className="w-full aspect-video bg-surface-container-low rounded-lg border border-outline-variant/30 overflow-hidden relative flex items-center justify-center">
-              <div className="text-center">
-                <span className="material-symbols-outlined text-[48px]">map</span>
-                <div className="font-label-sm text-label-sm text-on-surface-variant mt-2">Room layout removed</div>
-              </div>
+        {/* Card Sơ đồ phòng */}
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col h-full">
+          <h3 className="font-label-md text-label-md text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">floor</span>
+            Room Layout
+          </h3>
+          <div className="w-full aspect-video bg-surface-container-low rounded-lg border border-outline-variant/30 overflow-hidden relative flex items-center justify-center flex-1">
+            <div className="text-center">
+              <span className="material-symbols-outlined text-[48px]">map</span>
+              <div className="font-label-sm text-label-sm text-on-surface-variant mt-2">Room layout removed</div>
             </div>
-            <p className="font-label-sm text-label-sm text-on-surface-variant mt-3 text-center">
-              {location} - Collaborative Setup
-            </p>
           </div>
+          <p className="font-label-sm text-label-sm text-on-surface-variant mt-4 text-center">
+            {location} - Collaborative Setup
+          </p>
+        </div>
+      </section>
+
+      {/* Hành động (Đăng ký / Thanh toán) - Ở dưới cùng góc phải */}
+      <section className="flex flex-col items-end gap-3 mt-8 pt-8 border-t border-outline-variant/30">
+        <button
+          onClick={handleRegister}
+          disabled={!workshop.is_free && paymentLocked}
+          className="ui-btn ui-btn-primary font-label-md text-label-md px-8 py-3.5 rounded-lg flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span>{workshop.is_free ? 'Register Now' : 'Thanh toán demo'}</span>
+          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </button>
+
+        {/* Thông báo trạng thái đặt dưới nút */}
+        <div className="text-right">
+          {status === 'loading' && <p className="font-body-md text-body-md text-on-surface-variant">Registering...</p>}
+          {status === 'registered' && <p className="font-body-md text-body-md text-emerald-700 font-semibold">Successfully registered.</p>}
+          {status === 'error' && <p className="font-body-md text-body-md text-error">Registration failed. Try again.</p>}
+          {!workshop.is_free && paymentLocked && <p className="font-body-md text-body-md text-rose-700 mt-2 max-w-md">{paymentGateway?.message || 'Hệ thống thanh toán đang bảo trì, vui lòng thử lại sau.'}</p>}
         </div>
       </section>
     </main>

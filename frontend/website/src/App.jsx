@@ -7,11 +7,12 @@ import {
   loginRequest,
   registerRequest,
   saveSession,
-} from './lib/auth.js';
+  validateActivation,
+  completeActivation,
+  } from './api/auth.js';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import StudentBottomNav from './components/StudentBottomNav';
 import StudentHome from './pages/StudentHome';
 import WorkshopCatalog from './pages/WorkshopCatalog';
 import WorkshopDetails from './pages/WorkshopDetails';
@@ -19,10 +20,12 @@ import MyTickets from './pages/MyTickets';
 import PaymentGateway from './pages/PaymentGateway';
 import DataSync from './pages/DataSync';
 import AdminWorkshops from './pages/AdminWorkshops';
+import AdminWorkshopEdit from './pages/AdminWorkshopEdit';
 
 const DEFAULT_FORM = {
   email: '',
   password: '',
+  confirmPassword: '',
   fullName: '',
   studentId: '',
 };
@@ -58,27 +61,13 @@ const ROLE_META = {
   },
 };
 
-const AUTH_CARDS = [
-  {
-    title: 'Verified login flow',
-    description: 'Sessions are stored locally and revalidated with the backend profile endpoint.',
-  },
-  {
-    title: 'Role-based views',
-    description: 'The dashboard changes content based on `users.role` from Supabase.',
-  },
-  {
-    title: 'Protected routes',
-    description: 'Organizer and staff actions mirror the current Express middleware rules.',
-  },
-];
-
 const BACKEND_ROUTES = [
   { path: '/api/auth/register', access: 'Public' },
   { path: '/api/auth/login', access: 'Public' },
   { path: '/api/user/profile', access: 'Token required' },
   { path: '/api/payments/gateway/status', access: 'Public' },
   { path: '/api/admin/workshops', access: 'Organizer only' },
+  // notifications handled by email on register; no inbox route
   { path: '/api/checkin', access: 'Staff or organizer' },
 ];
 
@@ -134,6 +123,8 @@ function App() {
   const [auth, setAuth] = useState(null);
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState(DEFAULT_FORM);
+  const [activationVerified, setActivationVerified] = useState(false);
+  const [activationUser, setActivationUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState('');
@@ -208,41 +199,54 @@ function App() {
     setNotice('');
 
     try {
-      const payload =
-        mode === 'login'
-          ? await loginRequest({
-              email: form.email.trim(),
-              password: form.password,
-            })
-          : await registerRequest({
-              email: form.email.trim(),
-              password: form.password,
-              fullName: form.fullName.trim(),
-              studentId: form.studentId.trim(),
-            });
+      if (mode === 'login') {
+        const payload = await loginRequest({
+          email: form.email.trim(),
+          password: form.password,
+        });
 
-      const token = payload.token ?? null;
+        const token = payload.token ?? null;
 
-      if (token) {
-        const profile = payload.profile ?? (await fetchProfile(token)).profile;
-        const nextSession = {
-          token,
-          user: payload.user ?? null,
-          profile,
-        };
+        if (token) {
+          const profile = payload.profile ?? (await fetchProfile(token)).profile;
+          const nextSession = {
+            token,
+            user: payload.user ?? null,
+            profile,
+          };
 
-        saveSession(nextSession);
-        setAuth(nextSession);
+          saveSession(nextSession);
+          setAuth(nextSession);
+          setForm(DEFAULT_FORM);
+          return;
+        }
+      } else {
+        // register / activation flow
+        if (typeof activationVerified === 'undefined' || !activationVerified) {
+          // Step 1: validate student id + email
+          const response = await validateActivation({ studentId: form.studentId.trim(), email: form.email.trim() });
+          setActivationVerified(true);
+          setActivationUser(response.user ?? null);
+          setNotice('Sinh viên tồn tại. Vui lòng tạo mật khẩu.');
+          return;
+        }
+
+        // Step 2: complete activation (create password)
+        await completeActivation({
+          studentId: form.studentId.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+        });
+
+        setNotice('Kích hoạt tài khoản thành công. Vui lòng đăng nhập.');
+        setMode('login');
         setForm(DEFAULT_FORM);
+        setActivationVerified(false);
+        setActivationUser(null);
+        setSubmitting(false);
         return;
       }
-
-      setMode('login');
-      setForm((current) => ({
-        ...current,
-        password: '',
-      }));
-      setNotice(payload.message || 'Tài khoản đã được tạo. Hãy đăng nhập để tiếp tục.');
     } catch (submitError) {
       setError(submitError.message || 'Không thể xử lý yêu cầu.');
     } finally {
@@ -289,9 +293,18 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/admin/workshops/:id/edit"
+                  element={
+                    <ProtectedRoute requiredRole={['organizer', 'admin']}>
+                      <AdminWorkshopEdit />
+                    </ProtectedRoute>
+                  }
+                />
+
               </Routes>
             </main>
-            {isStudent && <StudentBottomNav />}
+            {/* StudentBottomNav removed — mobile bottom nav deprecated */}
           </div>
         </div>
       </BrowserRouter>
@@ -302,6 +315,8 @@ function App() {
     <AuthShell
       mode={mode}
       form={form}
+      activationVerified={activationVerified}
+      activationUser={activationUser}
       onModeChange={setMode}
       onChange={updateField}
       onSubmit={handleSubmit}
@@ -335,7 +350,18 @@ function LoadingScreen() {
   );
 }
 
-function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error, submitting }) {
+function AuthShell({
+  mode,
+  form,
+  activationVerified,
+  activationUser,
+  onModeChange,
+  onChange,
+  onSubmit,
+  notice,
+  error,
+  submitting,
+}) {
   return (
     <div className="min-h-screen overflow-hidden bg-[#f4f7fb] text-slate-900">
       <div className="relative mx-auto flex min-h-screen max-w-[1680px] flex-col lg:flex-row">
@@ -357,52 +383,9 @@ function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error
             </div>
 
             <div className="max-w-2xl space-y-4">
-              <span className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-700 ring-1 ring-sky-200">
-                Role-aware access
-              </span>
               <h1 className="font-[family-name:var(--ui-display)] text-4xl font-semibold leading-tight text-slate-950 lg:text-6xl">
                 Modern university auth flow with dashboard states that match real roles.
               </h1>
-              <p className="max-w-xl text-base leading-7 text-slate-600 lg:text-lg">
-                Use the same backend contract for registration, login, and authorization.
-                Students, staff, organizers, and admins all see different capabilities after
-                signing in.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {AUTH_CARDS.map((card) => (
-                <div
-                  key={card.title}
-                  className="rounded-3xl border border-slate-200 bg-white/85 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur"
-                >
-                  <h3 className="text-sm font-semibold text-slate-950">{card.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{card.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-[28px] border border-slate-200 bg-slate-950 px-5 py-5 text-white shadow-2xl shadow-slate-900/10">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-sky-200/70">Backend routes</p>
-                <h3 className="mt-1 text-xl font-semibold">Permission mapping</h3>
-              </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
-                Express + Supabase
-              </span>
-            </div>
-            <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              {BACKEND_ROUTES.map((route) => (
-                <div
-                  key={route.path}
-                  className="flex items-center justify-between gap-4 border-b border-white/8 px-4 py-3 last:border-b-0"
-                >
-                  <code className="rounded-full bg-white/10 px-3 py-1 text-xs text-sky-100">{route.path}</code>
-                  <span className="text-xs uppercase tracking-[0.22em] text-slate-300">{route.access}</span>
-                </div>
-              ))}
             </div>
           </div>
         </aside>
@@ -422,23 +405,7 @@ function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error
             </div>
 
             <div className="rounded-[32px] border border-white/70 bg-white/90 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.14)] backdrop-blur-xl lg:p-8">
-              <div className="flex rounded-2xl bg-slate-100 p-1">
-                {['login', 'register'].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => onModeChange(item)}
-                    className={joinClasses(
-                      'ui-btn flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-none',
-                      mode === item
-                        ? 'ui-btn-primary shadow-lg shadow-slate-950/20'
-                        : 'ui-btn-ghost text-slate-500 hover:text-slate-900',
-                    )}
-                  >
-                    {item === 'login' ? 'Sign in' : 'Create account'}
-                  </button>
-                ))}
-              </div>
+              {/* top toggle removed per UX: keep inline links in form instead */}
 
               <div className="mt-6 space-y-2">
                 <p className="text-sm font-medium uppercase tracking-[0.24em] text-sky-700">
@@ -457,26 +424,36 @@ function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error
               </div>
 
               <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-                <Field
-                  label="Email address"
-                  name="email"
-                  value={form.email}
-                  onChange={onChange}
-                  placeholder="student@unihub.edu.vn"
-                  type="email"
-                  autoComplete="email"
-                />
+                {mode === 'register' ? (
+                  <div className="rounded-3xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                    {activationVerified ? (
+                      <>
+                        <p className="font-semibold uppercase tracking-[0.18em] text-sky-700">Step 2 of 2</p>
+                        <p className="mt-1">Sinh viên đã được xác thực. Hãy tạo mật khẩu để hoàn tất kích hoạt.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-semibold uppercase tracking-[0.18em] text-sky-700">Step 1 of 2</p>
+                        <p className="mt-1">Nhập mã số sinh viên và email để kiểm tra thông tin tài khoản.</p>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+
+                {mode === 'login' ? (
+                  <Field
+                    label="Email address"
+                    name="email"
+                    value={form.email}
+                    onChange={onChange}
+                    placeholder="student@unihub.edu.vn"
+                    type="email"
+                    autoComplete="email"
+                  />
+                ) : null}
 
                 {mode === 'register' ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field
-                      label="Full name"
-                      name="fullName"
-                      value={form.fullName}
-                      onChange={onChange}
-                      placeholder="Nguyen Van A"
-                      autoComplete="name"
-                    />
+                  <div className="grid gap-4">
                     <Field
                       label="Student ID"
                       name="studentId"
@@ -484,26 +461,56 @@ function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error
                       onChange={onChange}
                       placeholder="SV2026001"
                       autoComplete="off"
+                      disabled={activationVerified}
                     />
+                    {typeof activationVerified !== 'undefined' && activationVerified ? (
+                      <div className="grid gap-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
+                        <div className="text-sm text-emerald-900">
+                          <p className="font-semibold uppercase tracking-[0.18em] text-emerald-700">Create password</p>
+                          <p className="mt-1">Tài khoản <span className="font-semibold">{activationUser?.student_id || form.studentId || 'này'}</span> đã tồn tại. Nhập mật khẩu mới để kích hoạt.</p>
+                        </div>
+                        <Field
+                          label="Password"
+                          name="password"
+                          value={form.password}
+                          onChange={onChange}
+                          placeholder="Enter your password"
+                          type="password"
+                          autoComplete="new-password"
+                        />
+                        <Field
+                          label="Confirm password"
+                          name="confirmPassword"
+                          value={form.confirmPassword}
+                          onChange={onChange}
+                          placeholder="Confirm password"
+                          type="password"
+                          autoComplete="new-password"
+                        />
+                      </div>
+                    ) : (
+                      <Field
+                        label="Email address"
+                        name="email"
+                        value={form.email}
+                        onChange={onChange}
+                        placeholder="student@unihub.edu.vn"
+                        type="email"
+                        autoComplete="email"
+                      />
+                    )}
                   </div>
-                ) : null}
-
-                <Field
-                  label="Password"
-                  name="password"
-                  value={form.password}
-                  onChange={onChange}
-                  placeholder="Enter your password"
-                  type="password"
-                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                />
-
-                {mode === 'register' ? (
-                  <p className="text-sm leading-6 text-slate-500">
-                    New accounts are created as <span className="font-semibold text-slate-900">student</span> by
-                    default. The backend role is the source of truth for all protected views.
-                  </p>
-                ) : null}
+                ) : (
+                  <Field
+                    label="Password"
+                    name="password"
+                    value={form.password}
+                    onChange={onChange}
+                    placeholder="Enter your password"
+                    type="password"
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  />
+                )}
 
                 {notice ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
@@ -522,16 +529,43 @@ function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error
                   disabled={submitting}
                   className="ui-btn ui-btn-primary inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 text-sm font-semibold shadow-lg shadow-slate-950/20"
                 >
-                  {submitting ? 'Please wait...' : mode === 'login' ? 'Sign in to dashboard' : 'Create my account'}
+                  {submitting
+                    ? 'Please wait...'
+                    : mode === 'login'
+                    ? 'Sign in to dashboard'
+                    : (typeof activationVerified !== 'undefined' && activationVerified)
+                    ? 'Create my account'
+                    : 'Check student'}
                 </button>
-              </form>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                  <span className="font-semibold text-slate-900">Authorization note:</span>
-                  <span>protected endpoints are enforced by backend middleware, not only by the UI.</span>
-                </div>
-              </div>
+                {mode === 'login' ? (
+                  <div className="mt-3 text-center text-sm">
+                    <span>Are you a new student? </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onModeChange('register');
+                      }}
+                      className="text-primary font-semibold underline ml-1"
+                    >
+                      Activate here
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-3 text-center text-sm">
+                    <span>Do you already have an account? </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onModeChange('login');
+                      }}
+                      className="text-primary font-semibold underline ml-1"
+                    >
+                      Log in
+                    </button>
+                  </div>
+                )}
+              </form>
             </div>
           </div>
         </main>
@@ -540,7 +574,7 @@ function AuthShell({ mode, form, onModeChange, onChange, onSubmit, notice, error
   );
 }
 
-function Field({ label, name, value, onChange, placeholder, type = 'text', autoComplete }) {
+function Field({ label, name, value, onChange, placeholder, type = 'text', autoComplete, disabled = false }) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
@@ -551,7 +585,11 @@ function Field({ label, name, value, onChange, placeholder, type = 'text', autoC
         type={type}
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+        disabled={disabled}
+        className={joinClasses(
+          'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100',
+          disabled && 'cursor-not-allowed bg-slate-100 text-slate-500',
+        )}
       />
     </label>
   );

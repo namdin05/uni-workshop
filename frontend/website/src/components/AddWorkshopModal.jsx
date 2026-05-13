@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createWorkshop, loadSession } from '../lib/auth';
+import { createWorkshop, loadSession } from '../api/auth';
 
 export default function AddWorkshopModal({ onClose, onSave }) {
   const session = loadSession();

@@ -12,13 +12,18 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
+    "@upstash/redis": "^1.38.0",
+    "axios": "^1.16.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.0",
     "install": "^0.13.0",
     "knex": "^3.2.9",
+    "nodemailer": "^8.0.7",
     "npm": "^11.13.0",
+    "opossum": "^9.0.0",
     "pg": "^8.20.0",
     "qrcode": "^1.5.3"
   },
