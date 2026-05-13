@@ -1,0 +1,11 @@
+import express from 'express';
+import { register, login, validateActivation, activateAccount } from '../api/auth.api.js';
+
+const router = express.Router();
+
+router.post('/register', register);
+router.post('/login', login);
+router.post('/activate/validate', validateActivation);
+router.post('/activate', activateAccount);
+
+export default router;
