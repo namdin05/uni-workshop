@@ -10,7 +10,7 @@ export { loginRequest, registerRequest, validateActivation, completeActivation }
 export { fetchProfile, fetchStudents, fetchMyRegistrations } from './userService.js';
 
 // Workshop Service APIs
-export { fetchWorkshops, fetchWorkshop, registerForWorkshop } from './workshopService.js';
+export { fetchWorkshops, fetchWorkshop, fetchRooms, registerForWorkshop } from './workshopService.js';
 
 // Admin Service APIs
 export { fetchAdminWorkshops, createWorkshop, warmUpWorkshopCache, updateWorkshop, updateWorkshopStatus, uploadCsv } from './adminService.js';

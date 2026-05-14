@@ -3,3 +3,6 @@
 
 /backend/.env
 /backend/.env.local
+
+/ai-summary/venv/
+/ai-summary/.env

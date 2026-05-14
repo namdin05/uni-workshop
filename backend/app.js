@@ -7,8 +7,11 @@ import workshopRoutes from './routes/workshop.route.js';
 import publicWorkshopRoutes from './routes/public.workshop.route.js';
 import paymentRoutes from './routes/payment.route.js';
 import checkinRoutes from './routes/checkin.route.js';
+import aiRoutes from './routes/ai.route.js';
+import roomRoutes from './routes/room.route.js';
 
 import { verifyToken, authorizeRole } from './middlewares/auth.middlewares.js';
+import { startNightlySync } from './utils/nightlySync.js';
 
 const app = express();
 app.use(cors());
@@ -27,6 +30,12 @@ app.use('/api/workshops', publicWorkshopRoutes);
 // Demo payment gateway endpoints
 app.use('/api/payments', paymentRoutes);
 
+// AI Summary endpoints
+app.use('/api/ai', aiRoutes);
+
+// Rooms endpoints
+app.use('/api/rooms', roomRoutes);
+
 // No notification routes (email sending handled inline on registration)
 
 // Check-in endpoints for staff mobile app
@@ -39,6 +48,8 @@ app.use('/api/admin/workshops',
     workshopRoutes
 );
 
+startNightlySync();
+
 app.listen(PORT, () => {
-    console.log(`🚀 UniHub Backend đang chạy tại http://localhost:${PORT}`);
+    console.log(`🚀 UniHub Backend đang chạy tại http://127.0.0.1:${PORT}`);
 });
