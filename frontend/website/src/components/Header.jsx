@@ -1,4 +1,4 @@
-import { clearSession } from '../lib/auth';
+import { clearSession } from '../api/auth';
 import { NavLink, useLocation } from 'react-router-dom';
 
 export default function Header({ session }) {

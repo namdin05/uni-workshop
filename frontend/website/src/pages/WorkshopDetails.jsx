@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { fetchWorkshop, registerForWorkshop, loadSession, fetchPaymentGatewayStatus } from '../lib/auth';
+import { fetchWorkshop, registerForWorkshop, loadSession, fetchPaymentGatewayStatus } from '../api/auth';
 
 export default function WorkshopDetails() {
   const { id } = useParams();

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { loadSession } from '../lib/auth';
+import { loadSession } from '../api/auth';
 
 export default function StudentHome() {
   const session = loadSession();

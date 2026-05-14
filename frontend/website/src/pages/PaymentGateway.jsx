@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { confirmDemoPayment, fetchPaymentGatewayStatus, fetchWorkshop, loadSession } from '../lib/auth';
+import { confirmDemoPayment, fetchPaymentGatewayStatus, fetchWorkshop, loadSession } from '../api/auth';
 
 function formatVnd(amount) {
   return new Intl.NumberFormat('en-US', {
