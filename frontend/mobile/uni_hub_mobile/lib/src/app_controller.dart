@@ -36,7 +36,7 @@ class AppController extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   bool get bootstrapping => loading;
-  bool get isOrganizer => session?.profile.role == 'organizer';
+  bool get isStaff => session?.profile.role == 'staff';
 
   Future<void> bootstrap() async {
     loading = true;
@@ -45,8 +45,8 @@ class AppController extends ChangeNotifier {
     online = await repository.hasInternetConnection();
     session = await repository.restoreSession();
 
-    if (session != null && session!.profile.role != 'organizer') {
-      message = 'Chỉ organizer mới được phép truy cập';
+    if (session != null && session!.profile.role != 'staff') {
+      message = 'Chỉ staff mới được phép truy cập';
       await logout();
       loading = false;
       notifyListeners();

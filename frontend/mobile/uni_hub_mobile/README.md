@@ -1,9 +1,9 @@
 # UniHub Mobile
 
-Organizer-only Flutter app for QR check-in and offline synchronization.
+Staff-only Flutter app for QR check-in and offline synchronization.
 
 ## Features
-- Organizer login only.
+- Staff login only.
 - Camera QR scanning and manual QR entry.
 - SQLite cache for offline check-in.
 - Automatic sync when connectivity returns.

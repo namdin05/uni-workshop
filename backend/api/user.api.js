@@ -73,3 +73,18 @@ export const getMyRegistrations = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
+export const listStudents = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, email, full_name, student_id, role')
+            .eq('role', 'student')
+            .order('full_name', { ascending: true });
+        
+        if (error) throw error;
+        return res.status(200).json({ students: data });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { createWorkshop, loadSession, fetchRooms } from '../lib/auth';
+import { createWorkshop, loadSession, fetchRooms } from '../api/auth';
 
 export default function AddWorkshopModal({ onClose, onSave }) {
   const session = loadSession();

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { loadSession, clearSession } from '../lib/auth';
+import { loadSession, clearSession } from '../api/auth';
 
 export default function Sidebar() {
   const session = loadSession();
@@ -61,6 +61,8 @@ export default function Sidebar() {
             <span className="material-symbols-outlined">group</span>
             Students
           </NavLink>
+          {/* Notifications inbox removed; email confirmation sent on registration */}
+          {/* admin send notifications removed - notifications sent automatically on registration */}
         </div>
 
         <div className="mt-auto px-4 pt-4 border-t border-slate-200 dark:border-slate-800">

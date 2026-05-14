@@ -15,7 +15,7 @@ import { startNightlySync } from './utils/nightlySync.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '60mb' }));
 
 const PORT = process.env.PORT || 3000;
 
@@ -36,8 +36,10 @@ app.use('/api/ai', aiRoutes);
 // Rooms endpoints
 app.use('/api/rooms', roomRoutes);
 
-// Check-in endpoints for organizer mobile app
-app.use('/api/checkin', verifyToken, authorizeRole(['organizer']), checkinRoutes);
+// No notification routes (email sending handled inline on registration)
+
+// Check-in endpoints for staff mobile app
+app.use('/api/checkin', verifyToken, authorizeRole(['staff']), checkinRoutes);
 
 // Protected Routes - Ví dụ trang Admin chỉ dành cho Ban tổ chức
 app.use('/api/admin/workshops', 
