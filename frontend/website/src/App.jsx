@@ -19,6 +19,7 @@ import PaymentGateway from './pages/PaymentGateway';
 import DataSync from './pages/DataSync';
 import AdminWorkshops from './pages/AdminWorkshops';
 import AdminWorkshopEdit from './pages/AdminWorkshopEdit';
+import AdminRooms from './pages/AdminRooms';
 import Settings from './pages/Settings';
 
 const DEFAULT_FORM = {
@@ -228,6 +229,14 @@ function App() {
                   element={
                     <ProtectedRoute requiredRole={['organizer', 'admin']}>
                       <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/rooms"
+                  element={
+                    <ProtectedRoute requiredRole={['organizer', 'admin']}>
+                      <AdminRooms />
                     </ProtectedRoute>
                   }
                 />

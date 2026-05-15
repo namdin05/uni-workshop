@@ -139,6 +139,21 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  Future<String> deleteManifest(WorkshopSummary workshop) async {
+    message = null;
+    notifyListeners();
+
+    try {
+      await repository.deleteManifest(workshop.id);
+      await _loadLocalState();
+      return 'Đã xóa ${workshop.title} khỏi thiết bị.';
+    } catch (error) {
+      message = error.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      throw ApiException(message!);
+    }
+  }
+
   Future<ScanOutcome> scanQr(String qrCode) async {
     message = null;
     final outcome = await repository.scanQr(qrCode.trim());

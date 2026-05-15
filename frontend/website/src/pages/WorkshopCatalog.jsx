@@ -12,9 +12,6 @@ export default function WorkshopCatalog() {
   const [loadingWorkshops, setLoadingWorkshops] = useState(true);
   const [loadingRegistrations, setLoadingRegistrations] = useState(true);
   
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('any');
-  const [topicFilter, setTopicFilter] = useState('all');
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
   const [registrationStatus, setRegistrationStatus] = useState(null);
   const [registrationMessage, setRegistrationMessage] = useState('');

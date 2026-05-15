@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { confirmDemoPayment, fetchPaymentGatewayStatus, fetchWorkshop, loadSession } from '../api/auth';
+import { fetchPaymentTimeout, cancelPendingRegistration } from '../api/paymentService';
 
 function formatVnd(amount) {
   return new Intl.NumberFormat('en-US', {
@@ -21,6 +22,9 @@ export default function PaymentGateway() {
   const [message, setMessage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [workshop, setWorkshop] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(600); // default 10 mins
+  const [paymentTimeout, setPaymentTimeout] = useState(600);
+  const [timerExpired, setTimerExpired] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -43,8 +47,26 @@ export default function PaymentGateway() {
       }
     }
 
+    async function loadPaymentTimeout() {
+      try {
+        const res = await fetchPaymentTimeout();
+        if (active) {
+          const timeout = res.timeoutSeconds || 600;
+          setPaymentTimeout(timeout);
+          setTimeRemaining(timeout);
+        }
+      } catch {
+        // fallback to default
+        if (active) {
+          setPaymentTimeout(600);
+          setTimeRemaining(600);
+        }
+      }
+    }
+
     loadWorkshop();
     loadGateway();
+    loadPaymentTimeout();
     const timer = window.setInterval(loadGateway, 5000);
 
     return () => {
@@ -52,6 +74,26 @@ export default function PaymentGateway() {
       window.clearInterval(timer);
     };
   }, []);
+
+  // Timer countdown and auto-cancel on timeout
+  useEffect(() => {
+    if (timeRemaining <= 0) {
+      setTimerExpired(true);
+      handleTimeoutCancel();
+      return;
+    }
+
+    const countdown = window.setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(countdown);
+  }, [timeRemaining]);
 
   const subtotal = Number(workshop?.price ?? 0);
   const vatRate = 0.1;
@@ -62,6 +104,39 @@ export default function PaymentGateway() {
     if (!gateway) return false;
     return gateway.canAttempt;
   }, [gateway]);
+
+  async function handleTimeoutCancel() {
+    try {
+      if (!session?.token) {
+        navigate(`/workshops`);
+        return;
+      }
+
+      await cancelPendingRegistration(registrationId, workshopId, session.token);
+      setMessage('Payment time expired. Session cancelled and seat released.');
+      window.setTimeout(() => navigate(`/workshops`), 1500);
+    } catch (err) {
+      console.error('Cancel on timeout failed:', err);
+      navigate(`/workshops`);
+    }
+  }
+
+  async function handleCancel() {
+    try {
+      setSubmitting(true);
+      if (!session?.token) {
+        navigate(`/workshops`);
+        return;
+      }
+
+      await cancelPendingRegistration(registrationId, workshopId, session.token);
+      setMessage('Registration cancelled and seat released.');
+      window.setTimeout(() => navigate(`/workshops`), 1000);
+    } catch (err) {
+      setMessage(err.message || 'Failed to cancel registration.');
+      setSubmitting(false);
+    }
+  }
 
   async function handlePay() {
     setSubmitting(true);
@@ -233,6 +308,23 @@ export default function PaymentGateway() {
               <span className="font-h2 text-h2 text-primary">{formatVnd(totalAmount)}</span>
             </div>
 
+            {/* Timer Display */}
+            <div className={`mb-6 p-3 rounded-lg flex items-center justify-between text-sm font-medium ${
+              timeRemaining <= 60 && timeRemaining > 0
+                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                : timeRemaining <= 0
+                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                : 'bg-blue-50 text-blue-700 border border-blue-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">schedule</span>
+                <span>Time remaining:</span>
+              </div>
+              <span className="font-semibold">
+                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+
             {/* Actions */}
             <div className="flex flex-col gap-3">
               <button
@@ -245,10 +337,11 @@ export default function PaymentGateway() {
               </button>
               
               <button
-                onClick={() => navigate(`/workshops/${workshopId}`)}
-                className="ui-btn ui-btn-surface rounded-xl w-full py-3 border border-outline-variant font-medium hover:bg-surface-container transition-colors"
+                onClick={handleCancel}
+                disabled={submitting}
+                className="ui-btn ui-btn-surface rounded-xl w-full py-3 border border-outline-variant font-medium hover:bg-surface-container transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cancel and Go Back
+                {submitting ? 'Cancelling...' : 'Cancel and Go Back'}
               </button>
             </div>
 

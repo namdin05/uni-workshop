@@ -4,7 +4,7 @@ import { loadSession, clearSession } from '../api/auth';
 export default function Sidebar() {
   const session = loadSession();
   const role = (session?.profile?.role || 'student').toLowerCase();
-  const isStaffOrOrganizerOrAdmin = role === 'staff' || role === 'organizer' || role === 'admin';
+  const isOrganizerOrAdmin = role === 'organizer' || role === 'admin';
 
   const handleLogout = () => {
     clearSession();
@@ -52,10 +52,6 @@ export default function Sidebar() {
             <span className="material-symbols-outlined">school</span>
             Workshops
           </NavLink>
-          <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#003366] dark:hover:text-blue-300 transition-all font-['Inter'] text-sm font-semibold" href="#">
-            <span className="material-symbols-outlined">badge</span>
-            Instructors
-          </a>
           <NavLink
             to="/sync"
             className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
@@ -64,13 +60,15 @@ export default function Sidebar() {
             Students
           </NavLink>
 
-          <NavLink
-            to="/rooms"
-            className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
-          >
-            <span className="material-symbols-outlined">meeting_room</span>
-            Rooms
-          </NavLink>
+          {isOrganizerOrAdmin && (
+            <NavLink
+              to="/rooms"
+              className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
+            >
+              <span className="material-symbols-outlined">meeting_room</span>
+              Rooms
+            </NavLink>
+          )}
           {/* Notifications inbox removed; email confirmation sent on registration */}
           {/* admin send notifications removed - notifications sent automatically on registration */}
         </div>
@@ -79,13 +77,15 @@ export default function Sidebar() {
           <p className="font-label-sm text-on-surface-variant">System</p>
         </div>
         <div className="flex-1 overflow-y-auto px-4 space-y-1">
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
-          >
-            <span className="material-symbols-outlined">settings</span>
-            Settings
-          </NavLink>
+          {isOrganizerOrAdmin && (
+            <NavLink
+              to="/settings"
+              className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
+            >
+              <span className="material-symbols-outlined">settings</span>
+              Settings
+            </NavLink>
+          )}
           {/* Notifications inbox removed; email confirmation sent on registration */}
           {/* admin send notifications removed - notifications sent automatically on registration */}
         </div>
@@ -107,13 +107,22 @@ export default function Sidebar() {
           <span className="material-symbols-outlined mb-1">school</span>
           Workshops
         </NavLink>
-        {isStaffOrOrganizerOrAdmin && (
+        {role === 'staff' && (
           <NavLink
             className={({ isActive }) => (isActive ? mobileActiveClass : mobileInactiveClass)}
             to="/sync"
           >
             <span className="material-symbols-outlined filled mb-1">assignment_ind</span>
             Staff
+          </NavLink>
+        )}
+        {isOrganizerOrAdmin && (
+          <NavLink
+            className={({ isActive }) => (isActive ? mobileActiveClass : mobileInactiveClass)}
+            to="/rooms"
+          >
+            <span className="material-symbols-outlined mb-1">meeting_room</span>
+            Rooms
           </NavLink>
         )}
         <NavLink

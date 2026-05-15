@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../utils/supabase.js';
+import { redis, workshopSeatKey } from '../utils/redis.js';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
 import {
@@ -8,6 +9,9 @@ import {
   reserveGatewayAttempt,
   setGatewayMode,
 } from '../utils/paymentGateway.js';
+
+// Memory config for payment timeout (default 10 minutes = 600 seconds)
+let paymentTimeoutSeconds = 60;
 
 async function loadAuthenticatedUserId(authId) {
   const { data, error } = await supabaseAdmin
@@ -270,5 +274,102 @@ export const createPaymentOrder = async (req, res) => {
       completeGatewayAttemptFailure();
     }
     return res.status(503).json({ message: error.message, gateway: getGatewayStatus() });
+  }
+};
+
+// Get payment timeout configuration
+export const getPaymentTimeout = async (req, res) => {
+  return res.status(200).json({ timeoutSeconds: paymentTimeoutSeconds });
+};
+
+// Set payment timeout configuration (admin only)
+export const setPaymentTimeout = async (req, res) => {
+  try {
+    const { timeoutSeconds } = req.body;
+
+    if (!Number.isFinite(timeoutSeconds) || timeoutSeconds < 60) {
+      return res.status(400).json({ message: 'Timeout must be at least 60 seconds' });
+    }
+
+    paymentTimeoutSeconds = timeoutSeconds;
+    return res.status(200).json({ message: 'Payment timeout updated', timeoutSeconds: paymentTimeoutSeconds });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// Cancel a pending payment registration (rollback slot)
+export const cancelRegistration = async (req, res) => {
+  const { registrationId, workshopId } = req.body;
+
+  if (!Number.isFinite(registrationId) || !Number.isFinite(workshopId)) {
+    return res.status(400).json({ message: 'Missing registrationId or workshopId' });
+  }
+
+  try {
+    const userId = await loadAuthenticatedUserId(req.user.id);
+
+    // 1. Fetch and validate registration
+    const { data: registration, error: regError } = await supabaseAdmin
+      .from('registrations')
+      .select('id, user_id, workshop_id, status')
+      .eq('id', registrationId)
+      .single();
+
+    if (regError || !registration) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+
+    // Verify ownership and status
+    if (registration.user_id !== userId) {
+      return res.status(403).json({ message: 'Unauthorized to cancel this registration' });
+    }
+
+    if (registration.status !== 'pending_payment') {
+      return res.status(400).json({ message: 'Only pending_payment registrations can be cancelled' });
+    }
+
+    // 2. Fetch workshop to update available_seats
+    const { data: workshop, error: workshopError } = await supabaseAdmin
+      .from('workshops')
+      .select('id, available_seats, total_seats')
+      .eq('id', workshopId)
+      .single();
+
+    if (workshopError || !workshop) {
+      return res.status(404).json({ message: 'Workshop not found' });
+    }
+
+    // 3. Increment available_seats in database
+    const newSeats = Math.min(workshop.available_seats + 1, workshop.total_seats);
+    await supabaseAdmin
+      .from('workshops')
+      .update({ available_seats: newSeats })
+      .eq('id', workshopId);
+
+    // 4. Update Redis cache
+    await redis.set(workshopSeatKey(workshopId), String(newSeats));
+
+    // 5. Cancel registration
+    await supabaseAdmin
+      .from('registrations')
+      .update({ status: 'cancelled' })
+      .eq('id', registrationId);
+
+    // 6. Cancel associated payment if exists
+    await supabaseAdmin
+      .from('payments')
+      .update({ status: 'cancelled' })
+      .eq('registration_id', registrationId)
+      .eq('status', 'pending');
+
+    return res.status(200).json({ 
+      message: 'Registration cancelled and seat released',
+      registrationId,
+      workshopId,
+      availableSeats: newSeats 
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };

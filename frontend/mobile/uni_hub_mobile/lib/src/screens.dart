@@ -153,15 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _StatusChip(label: controller.online ? 'Online' : 'Offline', color: controller.online ? Colors.green : Colors.orange),
-                              const _StatusChip(label: 'SQLite local', color: Colors.blue),
-                              const _StatusChip(label: 'Auto sync', color: Colors.indigo),
-                            ],
-                          ),
+                          
                         ],
                       ),
                     ),
@@ -283,21 +275,55 @@ class WorkshopsScreen extends StatelessWidget {
                           children: [
                             Text(workshop.isFree ? 'Free' : '\$${workshop.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                             const Spacer(),
-                            FilledButton.icon(
-                              onPressed: downloaded
-                                  ? null
-                                  : () async {
+                            if (downloaded)
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Xóa manifest'),
+                                      content: Text('Bạn có chắc chắn muốn xóa danh sách "${workshop.title}" khỏi thiết bị? Dữ liệu check-in chưa đồng bộ sẽ bị mất.'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text('Huỷ'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: const Text('Xóa'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed ?? false) {
+                                    if (context.mounted) {
                                       final messenger = ScaffoldMessenger.of(context);
                                       try {
-                                          final message = await context.read<AppController>().downloadWorkshop(workshop);
-                                          messenger.showSnackBar(SnackBar(content: Text(message)));
+                                        final message = await context.read<AppController>().deleteManifest(workshop);
+                                        messenger.showSnackBar(SnackBar(content: Text(message)));
                                       } catch (error) {
                                         messenger.showSnackBar(SnackBar(content: Text(error.toString())));
                                       }
-                                    },
-                              icon: const Icon(Icons.download),
-                              label: Text(downloaded ? 'Đã tải' : 'Tải manifest'),
-                            ),
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Xóa'),
+                              )
+                            else
+                              FilledButton.icon(
+                                onPressed: () async {
+                                  final messenger = ScaffoldMessenger.of(context);
+                                  try {
+                                    final message = await context.read<AppController>().downloadWorkshop(workshop);
+                                    messenger.showSnackBar(SnackBar(content: Text(message)));
+                                  } catch (error) {
+                                    messenger.showSnackBar(SnackBar(content: Text(error.toString())));
+                                  }
+                                },
+                                icon: const Icon(Icons.download),
+                                label: const Text('Tải manifest'),
+                              ),
                           ],
                         ),
                       ],
@@ -561,24 +587,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Build info', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Text('API base: ${context.read<AppController>().apiClient.baseUrl}'),
-                const SizedBox(height: 4),
-                Text('Downloaded workshops: ${controller.downloadedWorkshops.length}'),
-                const SizedBox(height: 4),
-                Text('Pending sync: ${controller.pendingScans.length}'),
-              ],
-            ),
-          ),
-        ),
+        
         const SizedBox(height: 16),
         FilledButton.icon(
           onPressed: () => context.read<AppController>().logout(),
