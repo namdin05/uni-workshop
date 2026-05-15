@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redisUrl = process.env.REDIS_URL;
+const redisUrl = process.env.REDIS_STRING;
 const redisToken = process.env.REDIS_TOKEN;
 
 if (!redisUrl || !redisToken) {

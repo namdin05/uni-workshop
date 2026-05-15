@@ -1,5 +1,5 @@
 import express from 'express';
-import { prewarmWorkshopCache, registerWorkshop, listWorkshops, getWorkshopById, createWorkshop, uploadCsv, updateWorkshop, updateWorkshopStatus } from '../api/workshop.api.js';
+import { prewarmWorkshopCache, registerWorkshop, listWorkshops, getWorkshopById, createWorkshop, uploadCsv, updateWorkshop, updateWorkshopStatus, getWorkshopRegistrations } from '../api/workshop.api.js';
 import { verifyToken, authorizeRole } from '../middlewares/auth.middlewares.js';
 import { registrationLimiter } from '../middlewares/rateLimit.js';
 
@@ -11,6 +11,9 @@ router.get('/', listWorkshops);
 router.get('/:id', getWorkshopById);
 
 router.post('/cache/prewarm', verifyToken, authorizeRole(['organizer', 'admin']), prewarmWorkshopCache);
+
+// Admin: fetch registrations for a workshop
+router.get('/:id/registrations', verifyToken, authorizeRole(['organizer', 'admin']), getWorkshopRegistrations);
 
 // Admin/Organizer Routes
 router.post('/', verifyToken, authorizeRole(['organizer', 'admin']), createWorkshop);

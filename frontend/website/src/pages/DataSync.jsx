@@ -77,12 +77,6 @@ export default function DataSync() {
               Upload and manage student roster records via CSV.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="ui-btn ui-btn-soft flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors hover:bg-surface-container">
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              Template
-            </button>
-          </div>
         </div>
       </header>
 

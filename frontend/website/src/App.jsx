@@ -5,22 +5,21 @@ import {
   fetchProfile,
   loadSession,
   loginRequest,
-  registerRequest,
   saveSession,
   validateActivation,
   completeActivation,
   } from './api/auth.js';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import StudentHome from './pages/StudentHome';
 import WorkshopCatalog from './pages/WorkshopCatalog';
-import WorkshopDetails from './pages/WorkshopDetails';
 import MyTickets from './pages/MyTickets';
 import PaymentGateway from './pages/PaymentGateway';
 import DataSync from './pages/DataSync';
 import AdminWorkshops from './pages/AdminWorkshops';
 import AdminWorkshopEdit from './pages/AdminWorkshopEdit';
+import Settings from './pages/Settings';
 
 const DEFAULT_FORM = {
   email: '',
@@ -30,74 +29,6 @@ const DEFAULT_FORM = {
   studentId: '',
 };
 
-const ROLE_META = {
-  student: {
-    label: 'Student',
-    tone: 'from-sky-600 to-blue-700',
-    surface: 'bg-sky-50 text-sky-700 ring-sky-200',
-    summary: 'View tickets, learning records, and personal progress.',
-    access: ['Profile', 'My Learning', 'Workshops'],
-  },
-  organizer: {
-    label: 'Organizer',
-    tone: 'from-indigo-700 to-slate-900',
-    surface: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-    summary: 'Manage workshops, reports, and live operations.',
-    access: ['Workshop admin', 'Analytics', 'Check-in'],
-  },
-  staff: {
-    label: 'Staff',
-    tone: 'from-emerald-600 to-teal-700',
-    surface: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    summary: 'Handle QR scanning, roster sync, and attendance.',
-    access: ['Check-in', 'Roster sync', 'Support desk'],
-  },
-  admin: {
-    label: 'Admin',
-    tone: 'from-slate-900 to-slate-700',
-    surface: 'bg-slate-100 text-slate-800 ring-slate-300',
-    summary: 'Full platform control across users, roles, and events.',
-    access: ['System control', 'All workshops', 'All check-in flows'],
-  },
-};
-
-const BACKEND_ROUTES = [
-  { path: '/api/auth/register', access: 'Public' },
-  { path: '/api/auth/login', access: 'Public' },
-  { path: '/api/user/profile', access: 'Token required' },
-  { path: '/api/payments/gateway/status', access: 'Public' },
-  { path: '/api/admin/workshops', access: 'Organizer only' },
-  // notifications handled by email on register; no inbox route
-  { path: '/api/checkin', access: 'Staff or organizer' },
-];
-
-const DASHBOARD_MODULES = [
-  {
-    title: 'Student Portal',
-    description: 'Tickets, learning records, and academic progress.',
-    allowedRoles: ['student', 'admin'],
-    accent: 'from-sky-500 to-indigo-600',
-  },
-  {
-    title: 'Workshop Management',
-    description: 'Create sessions, edit schedules, and publish updates.',
-    allowedRoles: ['organizer', 'admin'],
-    accent: 'from-indigo-700 to-slate-900',
-  },
-  {
-    title: 'Check-in Desk',
-    description: 'QR attendance, roster lookup, and live verification.',
-    allowedRoles: ['staff', 'organizer', 'admin'],
-    accent: 'from-emerald-600 to-teal-700',
-  },
-  {
-    title: 'Security and Access',
-    description: 'Inspect permissions, roles, and protected API coverage.',
-    allowedRoles: ['admin'],
-    accent: 'from-slate-900 to-slate-700',
-  },
-];
-
 function joinClasses(...classes) {
   return classes.filter(Boolean).join(' ');
 }
@@ -106,17 +37,16 @@ function normalizeRole(role) {
   return (role || 'student').toLowerCase();
 }
 
-function PlaceholderPage({ title, description }) {
-  return (
-    <div className="max-w-container-max mx-auto px-8 py-12 text-on-surface">
-      <h1 className="font-h2 text-h2 mb-3">{title}</h1>
-      <p className="font-body-md text-body-md text-on-surface-variant">{description}</p>
-    </div>
-  );
-}
+function getDefaultRoute(role) {
+  if (role === 'student') {
+    return '/home';
+  }
 
-function getRoleMeta(role) {
-  return ROLE_META[role] ?? ROLE_META.student;
+  if (role === 'staff') {
+    return '/sync';
+  }
+
+  return '/workshop';
 }
 
 function App() {
@@ -261,6 +191,7 @@ function App() {
   if (auth?.profile) {
     const role = normalizeRole(auth.profile.role);
     const isStudent = role === 'student';
+    const defaultRoute = getDefaultRoute(role);
 
     return (
       <BrowserRouter>
@@ -270,13 +201,20 @@ function App() {
             {isStudent && <Header session={auth} />}
             <main className="flex-1 overflow-y-auto">
               <Routes>
-                <Route path="/" element={isStudent ? <StudentHome /> : <DashboardShell session={auth} />} />
+                <Route path="/" element={<Navigate to={defaultRoute} replace />} />
                 <Route path="/home" element={<StudentHome />} />
                 <Route path="/workshops" element={<WorkshopCatalog />} />
-                <Route path="/workshops/:id" element={<WorkshopDetails />} />
                 <Route path="/tickets" element={<MyTickets />} />
                 <Route path="/payment/demo" element={<PaymentGateway />} />
                 <Route path="/profile" element={<MyTickets />} />
+                <Route
+                  path="/workshop"
+                  element={
+                    <ProtectedRoute requiredRole={['organizer', 'admin']}>
+                      <AdminWorkshops />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/sync"
                   element={
@@ -286,11 +224,17 @@ function App() {
                   }
                 />
                 <Route
-                  path="/admin/workshops"
+                  path="/settings"
                   element={
                     <ProtectedRoute requiredRole={['organizer', 'admin']}>
-                      <AdminWorkshops />
+                      <Settings />
                     </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/workshops"
+                  element={
+                    <Navigate to="/workshop" replace />
                   }
                 />
                 <Route
@@ -592,92 +536,6 @@ function Field({ label, name, value, onChange, placeholder, type = 'text', autoC
         )}
       />
     </label>
-  );
-}
-
-function DashboardShell({ session }) {
-  const role = normalizeRole(session.profile?.role);
-  const meta = getRoleMeta(role);
-  const profile = session.profile;
-
-  return (
-    <main className="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen bg-surface-container-low">
-      {/* Page Header */}
-      <div className="px-6 py-8 md:px-10 md:py-10 bg-surface border-b border-surface-variant">
-        <div>
-          <h1 className="font-h1 text-on-surface">Welcome back, {profile.full_name || profile.email}</h1>
-          <p className="font-body-md text-on-surface-variant mt-1">Dashboard overview • Role: <span className="font-semibold capitalize">{role}</span></p>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="p-6 md:p-10 flex-1 w-full max-w-container-max mx-auto space-y-6">
-        {/* Welcome Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Session Info Card */}
-          <div className="bg-gradient-to-br from-primary-container to-primary rounded-xl border border-primary-container p-6 text-on-primary shadow-sm relative overflow-hidden">
-            <div className="absolute inset-0 bg-white opacity-5 rounded-xl"></div>
-            <div className="relative z-10">
-              <span className="material-symbols-outlined text-4xl mb-2 block opacity-80">verified_user</span>
-              <h2 className="font-h2 text-on-primary">Protected session active</h2>
-              <p className="font-body-md text-primary-fixed mt-2">Your token was validated with /api/user/profile endpoint.</p>
-              <div className="flex gap-2 mt-4 flex-wrap">
-                <span className="bg-white/20 text-on-primary font-label-sm text-label-sm px-sm py-xs rounded-full">{meta.label}</span>
-                <span className="bg-white/20 text-on-primary font-label-sm text-label-sm px-sm py-xs rounded-full">{profile.student_id || 'ID pending'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Info Card */}
-          <div className="bg-surface rounded-xl border border-secondary-fixed p-6 shadow-sm">
-            <h3 className="font-h3 text-on-surface mb-4">Your Profile</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-surface-variant">
-                <span className="font-label-md text-on-surface-variant">Name</span>
-                <span className="font-label-md text-on-surface">{profile.full_name || 'Not set'}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-surface-variant">
-                <span className="font-label-md text-on-surface-variant">Email</span>
-                <span className="font-label-md text-on-surface truncate ml-2">{profile.email}</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="font-label-md text-on-surface-variant">Role</span>
-                <span className="font-label-md text-on-surface capitalize bg-primary-fixed/30 px-sm py-xs rounded-full">{role}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Accessible Features */}
-        <div className="bg-surface rounded-xl border border-secondary-fixed shadow-sm p-6">
-          <h3 className="font-h3 text-on-surface mb-4">Your available features</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {meta.access.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-3 rounded-lg bg-surface-container-high border border-outline-variant">
-                <span className="material-symbols-outlined text-primary-container text-sm">check_circle</span>
-                <span className="font-label-md text-on-surface">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Backend Routes Info */}
-        <div className="bg-surface rounded-xl border border-secondary-fixed shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-surface-variant">
-            <h3 className="font-h3 text-on-surface">Protected API Endpoints</h3>
-            <p className="font-label-sm text-on-surface-variant mt-1">These routes check your role via middleware</p>
-          </div>
-          <div className="divide-y divide-surface-variant">
-            {BACKEND_ROUTES.map((route) => (
-              <div key={route.path} className="p-4 hover:bg-surface-container-high transition-colors flex items-center justify-between gap-4">
-                <code className="font-label-sm text-on-surface bg-surface-container px-2 py-1 rounded">{route.path}</code>
-                <span className="font-label-sm bg-primary-fixed text-on-primary-fixed-variant px-sm py-xs rounded-full">{route.access}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </main>
   );
 }
 

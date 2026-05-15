@@ -30,21 +30,23 @@ export default function Sidebar() {
         </div>
 
         <div className="px-6 mb-8">
-          <p className="font-label-sm text-on-surface-variant mb-1">University Management</p>
           <div className="flex items-center gap-3 mt-3">
             <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant">
               <span className="material-symbols-outlined">person</span>
             </div>
             <div>
               <p className="font-label-md text-on-surface">{session?.profile?.full_name || 'User'}</p>
-              <p className="font-label-sm text-secondary capitalize">{role}</p>
+              <p className="font-label-sm text-slate-500 dark:text-slate-400 capitalize">{role}</p>
             </div>
           </div>
         </div>
 
+        <div className="px-4 mb-4">
+          <p className="font-label-sm text-on-surface-variant">Management</p>
+        </div>
         <div className="flex-1 overflow-y-auto px-4 space-y-1">
           <NavLink
-            to="/admin/workshops"
+            to="/workshop"
             className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
           >
             <span className="material-symbols-outlined">school</span>
@@ -60,6 +62,29 @@ export default function Sidebar() {
           >
             <span className="material-symbols-outlined">group</span>
             Students
+          </NavLink>
+
+          <NavLink
+            to="/rooms"
+            className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
+          >
+            <span className="material-symbols-outlined">meeting_room</span>
+            Rooms
+          </NavLink>
+          {/* Notifications inbox removed; email confirmation sent on registration */}
+          {/* admin send notifications removed - notifications sent automatically on registration */}
+        </div>
+
+        <div className="px-4 mb-4">
+          <p className="font-label-sm text-on-surface-variant">System</p>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-1">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => (isActive ? desktopActiveClass : desktopInactiveClass)}
+          >
+            <span className="material-symbols-outlined">settings</span>
+            Settings
           </NavLink>
           {/* Notifications inbox removed; email confirmation sent on registration */}
           {/* admin send notifications removed - notifications sent automatically on registration */}
@@ -77,7 +102,7 @@ export default function Sidebar() {
       <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <NavLink
           className={({ isActive }) => (isActive ? mobileActiveClass : mobileInactiveClass)}
-          to="/admin/workshops"
+          to="/workshop"
         >
           <span className="material-symbols-outlined mb-1">school</span>
           Workshops

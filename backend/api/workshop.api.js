@@ -437,3 +437,32 @@ export const updateWorkshopStatus = async (req, res) => {
 };
 
 // NotificationDispatcher removed; emails are sent directly via mailTransport
+
+export const getWorkshopRegistrations = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) return res.status(400).json({ message: 'Invalid workshop id' });
+
+    const { data: registrations, error } = await supabaseAdmin
+      .from('registrations')
+      .select(`
+        id,
+        user_id,
+        workshop_id,
+        status,
+        qr_code,
+        checked_in_at,
+        created_at,
+        users(id, student_id, full_name, email)
+      `)
+      .eq('workshop_id', id)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    return res.status(200).json({ registrations: registrations ?? [] });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};

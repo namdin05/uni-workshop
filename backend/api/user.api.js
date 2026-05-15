@@ -53,6 +53,7 @@ export const getMyRegistrations = async (req, res) => {
                     id,
                     title,
                     description,
+                    ai_summary,
                     start_time,
                     end_time,
                     speaker_name,

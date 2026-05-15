@@ -6,3 +6,4 @@ export const warmUpWorkshopCache = (token) => request('/api/admin/workshops/cach
 export const updateWorkshop = (id, body, token) => request(`/api/admin/workshops/${id}`, { method: 'PATCH', body, token });
 export const updateWorkshopStatus = (id, body, token) => request(`/api/admin/workshops/${id}/status`, { method: 'PATCH', body, token });
 export const uploadCsv = (csvText, fileName) => request('/api/workshops/sync/csv', { method: 'POST', body: { csv: csvText, fileName } });
+export const fetchWorkshopRegistrations = (id, token) => request(`/api/admin/workshops/${id}/registrations`, { method: 'GET', token });
