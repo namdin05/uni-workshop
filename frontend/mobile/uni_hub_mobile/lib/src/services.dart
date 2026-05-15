@@ -280,6 +280,15 @@ class LocalDatabase {
     return result ?? 0;
   }
 
+  Future<void> deleteManifest(int workshopId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('workshops_cache', where: 'id = ?', whereArgs: [workshopId]);
+      await txn.delete('registrations_cache', where: 'workshop_id = ?', whereArgs: [workshopId]);
+      await txn.delete('pending_scans', where: 'workshop_id = ?', whereArgs: [workshopId]);
+    });
+  }
+
   Future<ManifestRegistration?> findRegistrationByQr(String qrCode) async {
     final db = await database;
     final rows = await db.query('registrations_cache', where: 'qr_code = ?', whereArgs: [qrCode], limit: 1);
@@ -492,6 +501,8 @@ class CheckinRepository {
   Future<List<WorkshopSummary>> fetchWorkshops() => apiClient.fetchWorkshops();
 
   Future<int> workshopRegistrationCount(int workshopId) => localDatabase.workshopRegistrationCount(workshopId);
+
+  Future<void> deleteManifest(int workshopId) => localDatabase.deleteManifest(workshopId);
 
   Future<WorkshopSummary> downloadWorkshop(AuthSession session, WorkshopSummary workshop) async {
     final payload = await apiClient.fetchWorkshopManifest(session.token, workshop.id);
