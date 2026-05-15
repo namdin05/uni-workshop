@@ -13,7 +13,7 @@ export { fetchProfile, fetchStudents, fetchMyRegistrations } from './userService
 export { fetchWorkshops, fetchWorkshop, fetchRooms, registerForWorkshop } from './workshopService.js';
 
 // Admin Service APIs
-export { fetchAdminWorkshops, createWorkshop, warmUpWorkshopCache, updateWorkshop, updateWorkshopStatus, uploadCsv } from './adminService.js';
+export { fetchAdminWorkshops, createWorkshop, warmUpWorkshopCache, updateWorkshop, updateWorkshopStatus, uploadCsv, fetchWorkshopRegistrations } from './adminService.js';
 
 // Payment Service APIs
 export { fetchPaymentGatewayStatus, setPaymentGatewayState, confirmDemoPayment, togglePaymentGateway } from './paymentService.js';

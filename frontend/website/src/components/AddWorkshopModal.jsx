@@ -3,19 +3,23 @@ import { createWorkshop, loadSession, fetchRooms } from '../api/auth';
 
 export default function AddWorkshopModal({ onClose, onSave }) {
   const session = loadSession();
+  
+  // Tách riêng date, time_start, time_end trên state để hiển thị UI độc lập
   const [form, setForm] = useState({
     title: '',
     description: '',
     ai_summary: '',
     speaker_name: '',
     room_id: '',
-    start_time: '',
-    end_time: '',
+    date: '',        // Thêm trường ngày
+    time_start: '',  // Thêm trường giờ bắt đầu
+    time_end: '',    // Thêm trường giờ kết thúc
     is_free: true,
     price: 0,
     total_seats: 40,
     status: 'draft',
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rooms, setRooms] = useState([]);
@@ -41,13 +45,27 @@ export default function AddWorkshopModal({ onClose, onSave }) {
 
   function updateForm(e) {
     const { name, value, type, checked } = e.target;
+    
+    if (name === 'room_id') {
+      const roomId = value;
+      const room = rooms.find((r) => String(r.id) === String(roomId));
+      const capacity = typeof room?.capacity === 'number' ? room.capacity : (Number.isFinite(Number(value)) ? Number(value) : 0);
+      
+      setForm((cur) => ({
+        ...cur,
+        room_id: roomId,
+        total_seats: capacity,
+        available_seats: capacity,
+      }));
+      return;
+    }
+
     setForm((cur) => ({
       ...cur,
       [name]: type === 'checkbox' ? checked : type === 'number' ? Number(value) : value,
     }));
   }
 
-  // === HÀM XỬ LÝ UPLOAD PDF & GỌI AI ===
   const handleAiUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -61,8 +79,7 @@ export default function AddWorkshopModal({ onClose, onSave }) {
     try {
       if (!session?.token) throw new Error('Not authenticated');
 
-      // 1. Upload file lấy JobID
-      const uploadRes = await fetch('http://localhost:5000/api/ai/upload', {
+      const uploadRes = await fetch('http://localhost:3000/api/ai/upload', {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.token}` },
         body: formData,
@@ -73,22 +90,18 @@ export default function AddWorkshopModal({ onClose, onSave }) {
 
       setAiStatusText('AI đang đọc và tóm tắt tài liệu...');
 
-      // 2. Liên tục kiểm tra trạng thái (Polling)
       const pollingInterval = setInterval(async () => {
-        const statusRes = await fetch(`http://localhost:5000/api/ai/status/${uploadData.jobId}`, {
+        const statusRes = await fetch(`http://localhost:3000/api/ai/status/${uploadData.jobId}`, {
           headers: { Authorization: `Bearer ${session.token}` },
         });
         const statusData = await statusRes.json();
 
         if (statusData.state === 'completed') {
           clearInterval(pollingInterval);
-          
-          // Đổ dữ liệu AI trả về vào state form.ai_summary
           setForm((cur) => ({ ...cur, ai_summary: statusData.result.summary }));
-          
           setIsAiLoading(false);
           setAiStatusText('');
-          if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+          if (fileInputRef.current) fileInputRef.current.value = '';
         } else if (statusData.state === 'failed') {
           clearInterval(pollingInterval);
           setIsAiLoading(false);
@@ -115,19 +128,43 @@ export default function AddWorkshopModal({ onClose, onSave }) {
         throw new Error('Not authenticated');
       }
 
+      // Xử lý gộp Ngày và Giờ thành định dạng chuẩn ISO (hoặc chuẩn datetime-local cũ)
+      if (!form.date || !form.time_start || !form.time_end) {
+        throw new Error('Vui lòng chọn đầy đủ ngày và giờ.');
+      }
+
+      // Chuyển đổi thành string ISO hoàn chỉnh để gửi lên server
+      const startDateTime = new Date(`${form.date}T${form.time_start}`).toISOString();
+      const endDateTime = new Date(`${form.date}T${form.time_end}`).toISOString();
+
       const payload = {
-        ...form,
+        title: form.title,
+        description: form.description,
+        ai_summary: form.ai_summary,
+        speaker_name: form.speaker_name,
+        room_id: form.room_id,
+        is_free: form.is_free,
+        price: form.price,
+        total_seats: form.total_seats,
         available_seats: form.total_seats,
+        status: form.status,
+        // Gửi đi 2 biến start_time và end_time như cũ
+        start_time: startDateTime,
+        end_time: endDateTime,
       };
 
       const res = await createWorkshop(payload, session.token);
+      
+      // Reset form sau khi tạo thành công
       setForm({
         title: '',
         description: '',
+        ai_summary: '',
         speaker_name: '',
-        location: '',
-        start_time: '',
-        end_time: '',
+        room_id: '',
+        date: '',
+        time_start: '',
+        time_end: '',
         is_free: true,
         price: 0,
         total_seats: 40,
@@ -143,53 +180,69 @@ export default function AddWorkshopModal({ onClose, onSave }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="relative w-full max-w-2xl rounded-xl bg-white bg-surface p-8 shadow-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 sm:p-6" onClick={onClose}>
+    
+      <div className="relative w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl ring-1 ring-black/5" onClick={(e) => e.stopPropagation()}>
+        
         <button
           onClick={onClose}
-          className="ui-btn ui-btn-ghost absolute right-4 top-4 text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-lg"
+          className="absolute right-5 top-5 flex items-center justify-center rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
         >
           <span className="material-symbols-outlined">close</span>
         </button>
 
-        <h2 className="font-h2 text-h2 text-on-surface">Create New Workshop</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">Add a new workshop session for students to register.</p>
+        <div className="mb-6">
+          <h2 className="font-h2 text-h2 text-slate-900">Create New Workshop</h2>
+          <p className="font-body-md text-body-md text-slate-500 mt-1">
+            Add a new workshop session for students to register.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-md">
-          <div className="grid gap-md sm:grid-cols-2">
-            <label>
-              <span className="block font-label-md text-label-md text-on-surface">Workshop Title</span>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <label className="block">
+              <span className="block font-label-md text-label-md text-slate-700 mb-1.5">Workshop Title</span>
               <input
                 name="title"
                 value={form.title}
                 onChange={updateForm}
                 placeholder="e.g. Introduction to React"
-                className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface placeholder-on-surface-variant/70 focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
                 required
               />
             </label>
-            <label>
-              <span className="block font-label-md text-label-md text-on-surface">Speaker Name</span>
+            <label className="block">
+              <span className="block font-label-md text-label-md text-slate-700 mb-1.5">Speaker Name</span>
               <input
                 name="speaker_name"
                 value={form.speaker_name}
                 onChange={updateForm}
                 placeholder="Dr. John Doe"
-                className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface placeholder-on-surface-variant/70 focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
                 required
               />
             </label>
           </div>
 
-          <label className="block mt-4">
-            <span className="block font-label-md text-label-md text-on-surface">Description</span>
-            <textarea name="description" value={form.description} onChange={updateForm} placeholder="Brief details about the workshop..." rows="2" className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface placeholder-on-surface-variant/70 focus:border-primary focus:outline-none" />
+          <label className="block">
+            <span className="block font-label-md text-label-md text-slate-700 mb-1.5">Description</span>
+            <textarea 
+              name="description" 
+              value={form.description} 
+              onChange={updateForm} 
+              placeholder="Brief details about the workshop..." 
+              rows="3" 
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors resize-none" 
+            />
           </label>
 
-          {/* === KHU VỰC DESCRIPTION & NÚT AI === */}
-          <div className="flex flex-col gap-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-label-md text-label-md text-on-surface">AI Summary</span>
+          <div className="rounded-2xl bg-blue-50/50 border border-blue-200 p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="font-label-md text-label-md text-blue-700 font-semibold flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+                AI Syllabus Summary
+              </span>
               
               <div>
                 <input 
@@ -203,12 +256,12 @@ export default function AddWorkshopModal({ onClose, onSave }) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isAiLoading}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-md text-sm font-medium text-primary hover:bg-primary-fixed/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-primary/20"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-700 bg-white border border-blue-200 shadow-sm hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span className="material-symbols-outlined text-[16px]">
-                    {isAiLoading ? 'sync' : 'auto_awesome'}
+                  <span className={`material-symbols-outlined text-[18px] ${isAiLoading ? 'animate-spin' : ''}`}>
+                    {isAiLoading ? 'sync' : 'upload_file'}
                   </span>
-                  {isAiLoading ? aiStatusText : 'Tóm tắt bằng AI (PDF)'}
+                  {isAiLoading ? aiStatusText : 'Generate from PDF'}
                 </button>
               </div>
             </div>
@@ -217,20 +270,22 @@ export default function AddWorkshopModal({ onClose, onSave }) {
               name="ai_summary"
               value={form.ai_summary}
               onChange={updateForm}
-              placeholder={isAiLoading ? "Vui lòng đợi, AI đang phân tích tài liệu..." : "Workshop description and objectives..."}
+              placeholder={isAiLoading ? "Vui lòng đợi, AI đang phân tích tài liệu..." : "Auto-generated summary will appear here..."}
               disabled={isAiLoading}
               rows="4"
-              className={`mt-xs w-full rounded-lg border px-sm py-sm font-body-md text-on-surface placeholder-on-surface-variant/70 focus:border-primary focus:outline-none transition-colors ${isAiLoading ? 'bg-surface-container border-primary-fixed-dim animate-pulse' : 'border-outline'}`}
+              className={`w-full rounded-xl border px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors resize-none ${
+                isAiLoading ? 'bg-slate-50 border-blue-300 animate-pulse' : 'bg-white border-slate-300'
+              }`}
             />
           </div>
 
-          <label className="block mt-4">
-            <span className="block font-label-md text-label-md text-on-surface">Location</span>
+          <label className="block">
+            <span className="block font-label-md text-label-md text-slate-700 mb-1.5">Location (Room)</span>
             <select
               name="room_id"
               value={form.room_id}
               onChange={updateForm}
-              className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface bg-white focus:border-primary focus:outline-none"
+              className="[color-scheme:light] w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer transition-colors"
               required
             >
               <option value="" disabled>Select a room...</option>
@@ -242,64 +297,64 @@ export default function AddWorkshopModal({ onClose, onSave }) {
             </select>
           </label>
 
-          <div className="grid gap-md sm:grid-cols-2">
-            <label>
-              <span className="block font-label-md text-label-md text-on-surface">Start Time</span>
+          {/* Dòng 5: Thời gian tách biệt (Ngày, Giờ Bắt đầu, Giờ Kết thúc) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <label className="block">
+              <span className="block font-label-md text-label-md text-slate-700 mb-1.5">Date</span>
               <input
-                name="start_time"
-                type="datetime-local"
-                value={form.start_time}
+                name="date"
+                type="date"
+                value={form.date}
                 onChange={updateForm}
-                className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface focus:border-primary focus:outline-none"
+                className="[color-scheme:light] w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
                 required
               />
             </label>
-            <label>
-              <span className="block font-label-md text-label-md text-on-surface">End Time</span>
+            <label className="block">
+              <span className="block font-label-md text-label-md text-slate-700 mb-1.5">Start Time</span>
               <input
-                name="end_time"
-                type="datetime-local"
-                value={form.end_time}
+                name="time_start"
+                type="time"
+                value={form.time_start}
                 onChange={updateForm}
-                className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface focus:border-primary focus:outline-none"
+                className="[color-scheme:light] w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
+                required
+              />
+            </label>
+            <label className="block">
+              <span className="block font-label-md text-label-md text-slate-700 mb-1.5">End Time</span>
+              <input
+                name="time_end"
+                type="time"
+                value={form.time_end}
+                onChange={updateForm}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
                 required
               />
             </label>
           </div>
 
-          <div className="grid gap-md sm:grid-cols-3">
-            <label>
-              <span className="block font-label-md text-label-md text-on-surface">Total Seats</span>
+          <div className="flex flex-wrap items-center gap-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
-                name="total_seats"
-                type="number"
-                value={form.total_seats}
+                name="is_free"
+                type="checkbox"
+                checked={form.is_free}
                 onChange={updateForm}
-                className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface focus:border-primary focus:outline-none"
-                min="1"
+                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
               />
+              <span className="font-label-md text-label-md text-slate-800 font-medium">Free Workshop</span>
             </label>
-            <label className="flex items-end gap-sm py-sm">
-              <div className="flex items-center">
-                <input
-                  name="is_free"
-                  type="checkbox"
-                  checked={form.is_free}
-                  onChange={updateForm}
-                  className="w-4 h-4 rounded border-outline"
-                />
-              </div>
-              <span className="font-label-md text-label-md text-on-surface">Free</span>
-            </label>
+            
             {!form.is_free && (
-              <label>
-                <span className="block font-label-md text-label-md text-on-surface">Price ($)</span>
+              <label className="flex items-center gap-3 ml-auto">
+                <span className="font-label-md text-label-md text-slate-700">Price ($)</span>
                 <input
                   name="price"
                   type="number"
                   value={form.price}
                   onChange={updateForm}
-                  className="mt-xs w-full rounded-lg border border-outline px-sm py-sm font-body-md text-on-surface focus:border-primary focus:outline-none"
+                  className="w-28 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-colors"
                   min="0"
                   step="0.01"
                 />
@@ -308,26 +363,26 @@ export default function AddWorkshopModal({ onClose, onSave }) {
           </div>
 
           {error && (
-            <div className="rounded-lg border border-error/30 bg-error-container/20 p-md text-label-md text-error">
-              <span className="material-symbols-outlined text-sm mr-2 inline">error</span>
+            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-600">
+              <span className="material-symbols-outlined text-[20px]">error</span>
               {error}
             </div>
           )}
 
-          <div className="flex gap-md pt-md border-t border-surface-variant">
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
-              className="ui-btn ui-btn-surface flex-1 rounded-lg font-label-md py-sm px-md"
+              className="rounded-xl border border-slate-300 bg-white font-label-md py-3 px-6 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="ui-btn ui-btn-primary flex-1 rounded-lg font-label-md py-sm px-md disabled:opacity-70 flex items-center justify-center gap-xs"
+              className="rounded-xl bg-blue-600 font-label-md py-3 px-6 text-sm font-semibold text-white disabled:opacity-70 flex items-center justify-center gap-2 shadow-sm hover:bg-blue-700 transition-all"
             >
-              <span className="material-symbols-outlined text-sm">{loading ? 'hourglass_empty' : 'add'}</span>
+              <span className="material-symbols-outlined text-[18px]">{loading ? 'hourglass_empty' : 'add'}</span>
               {loading ? 'Creating...' : 'Create Workshop'}
             </button>
           </div>
