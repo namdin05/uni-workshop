@@ -2,7 +2,6 @@ import QRCode from 'qrcode';
 
 import { supabase, supabaseAdmin } from '../utils/supabase.js';
 import { redis, workshopSeatKey } from '../utils/redis.js';
-import { mailTransport, mailFrom, isMailConfigured } from '../utils/mailer.js';
 
 const ACTIVE_WORKSHOP_STATUS = 'published';
 
@@ -204,34 +203,6 @@ export const registerWorkshop = async (req, res) => {
       Math.max(seats - 1, 0);
 
     await redis.set(cacheKey, String(nextSeats));
-
-    // send notification to the student (web + email) - non-fatal if fails
-    try {
-      if (userData?.data) {
-        const userFull = userData.data;
-        const title = `Registration confirmed: ${workshopData.data.title}`;
-        const body = `You have successfully registered for ${workshopData.data.title} on ${new Date(
-          workshopData.data.start_time,
-        ).toLocaleString()}.\n\nTicket: ${qrString}`;
-
-          const subject = `Registration confirmed: ${workshopData.data.title}`;
-          const text = `You have successfully registered for ${workshopData.data.title} on ${new Date(
-            workshopData.data.start_time,
-          ).toLocaleString()}.\nTicket: ${qrString}`;
-          const html = `<p>You have successfully registered for <strong>${workshopData.data.title}</strong> on <em>${new Date(
-            workshopData.data.start_time,
-          ).toLocaleString()}</em>.</p><p>Ticket: <strong>${qrString}</strong></p><p><img src="${qrDataUrl}" alt="QR code"/></p>`;
-      }
-          await mailTransport.sendMail({
-            from: mailFrom,
-            to: userFull.email,
-            subject,
-            text,
-            html,
-          });
-    } catch (notifyErr) {
-      console.warn('Notification dispatch failed:', String(notifyErr?.message || notifyErr));
-    }
 
     return res.status(200).json({
       success: true,

@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../utils/supabase.js';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
+import { Queue } from 'bullmq';
+import IORedis from 'ioredis';
 import {
   completeGatewayAttemptFailure,
   completeGatewayAttemptSuccess,
@@ -8,6 +10,11 @@ import {
   reserveGatewayAttempt,
   setGatewayMode,
 } from '../utils/paymentGateway.js';
+
+const redisConnection = new IORedis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+});
+const notificationQueue = new Queue('workshop-notifications', { connection: redisConnection });
 
 async function loadAuthenticatedUserId(authId) {
   const { data, error } = await supabaseAdmin
@@ -57,7 +64,7 @@ export const confirmDemoPayment = async (req, res) => {
         status,
         qr_code,
         workshop_id,
-        workshops(id, title, price, is_free)
+        workshops(id, title, price, is_free, start_time, rooms(name))
       `)
       .eq('id', registrationId)
       .single();
@@ -126,6 +133,30 @@ export const confirmDemoPayment = async (req, res) => {
 
       completeGatewayAttemptSuccess();
 
+      try {
+        const { data: userRecord } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name')
+            .eq('id', userId)
+            .single();
+
+        if (userRecord) {
+            await notificationQueue.add('send-notification', {
+                user: { 
+                    email: userRecord.email, 
+                    full_name: userRecord.full_name || 'Sinh viên'
+                },
+                workshopData: { 
+                    title: registration.workshops?.title || 'Workshop chưa rõ tên',
+                    time: registration.workshops?.start_time ? new Date(registration.workshops.start_time).toLocaleString('vi-VN') : 'Chưa cập nhật',
+                    location: registration.workshops?.rooms?.name || 'Chưa cập nhật'
+                }
+            });
+        }
+      } catch (queueError) {
+        console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
+      }
+
       return res.status(200).json({
         message: 'Payment completed in demo mode',
         registrationId,
@@ -144,6 +175,30 @@ export const confirmDemoPayment = async (req, res) => {
     }
 
     completeGatewayAttemptSuccess();
+
+    try {
+        const { data: userRecord } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name')
+            .eq('id', userId)
+            .single();
+
+        if (userRecord) {
+            await notificationQueue.add('send-notification', {
+                user: { 
+                    email: userRecord.email, 
+                    full_name: userRecord.full_name || 'Sinh viên'
+                },
+                workshopData: { 
+                    title: registration.workshops?.title || 'Workshop chưa rõ tên',
+                    time: registration.workshops?.start_time ? new Date(registration.workshops.start_time).toLocaleString('vi-VN') : 'Chưa cập nhật',
+                    location: registration.workshops?.rooms?.name || 'Chưa cập nhật'
+                }
+            });
+        }
+    } catch (queueError) {
+        console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
+    }
 
     return res.status(200).json({
       message: 'Payment already existed, returned existing record',
@@ -196,7 +251,7 @@ export const createPaymentOrder = async (req, res) => {
         status,
         qr_code,
         workshop_id,
-        workshops(id, title, price, is_free)
+        workshops(id, title, price, is_free, start_time, rooms(name))
       `)
       .eq('id', registrationId)
       .single();
@@ -263,6 +318,30 @@ export const createPaymentOrder = async (req, res) => {
     }
 
     completeGatewayAttemptSuccess();
+
+    try {
+        const { data: userRecord } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name')
+            .eq('id', userId)
+            .single();
+
+        if (userRecord) {
+            await notificationQueue.add('send-notification', {
+                user: { 
+                    email: userRecord.email, 
+                    full_name: userRecord.full_name || 'Sinh viên'
+                },
+                workshopData: { 
+                    title: registration.workshops?.title || 'Workshop chưa rõ tên',
+                    time: registration.workshops?.start_time ? new Date(registration.workshops.start_time).toLocaleString('vi-VN') : 'Chưa cập nhật',
+                    location: registration.workshops?.rooms?.name || 'Chưa cập nhật'
+                }
+            });
+        }
+    } catch (queueError) {
+        console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
+    }
 
     return res.status(200).json({ success: true, message: 'Thanh toán thành công', registrationId, transaction: result, gateway: getGatewayStatus() });
   } catch (error) {
