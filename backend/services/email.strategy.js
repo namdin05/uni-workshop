@@ -1,9 +1,12 @@
 import { mailTransport, mailFrom } from '../utils/mailer.js';
+import QRCode from 'qrcode';
 
 export class EmailStrategy {
 
     async send(user, workshopData) {
         try {
+            const qrImageBuffer = await QRCode.toBuffer(String(workshopData.qrCode || 'TICKET_ERROR'));
+            
             const mailOptions = {
                 from: mailFrom,
                 to: user.email,
@@ -20,7 +23,14 @@ export class EmailStrategy {
                         <hr>
                         <p style="color: #7f8c8d; font-size: 12px;">Đây là email tự động, vui lòng không trả lời.</p>
                     </div>
-                `
+                `,
+                attachments: [
+                    {
+                        filename: 'ticket-qr.png',
+                        content: qrImageBuffer,
+                        cid: 'ticket_qr_code' // CID này phải khớp với dòng src="cid:..." ở trên
+                    }
+                ]
             };
 
             await mailTransport.sendMail(mailOptions);

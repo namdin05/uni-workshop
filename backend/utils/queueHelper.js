@@ -4,7 +4,7 @@ import IORedis from 'ioredis';
 const redisConnection = new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
 export const notificationQueue = new Queue('workshop-notifications', { connection: redisConnection });
 
-export const enqueueTicketEmail = async (email, fullName, title, startTime, roomName) => {
+export const enqueueTicketEmail = async (email, fullName, title, startTime, roomName, qrCodeString) => {
     try {
         await notificationQueue.add('send-notification', {
             user: { 
@@ -14,7 +14,8 @@ export const enqueueTicketEmail = async (email, fullName, title, startTime, room
             workshopData: {
                 title: title || 'Workshop chưa rõ tên',
                 time: startTime ? new Date(startTime).toLocaleString('vi-VN') : 'Chưa cập nhật',
-                location: roomName || 'Chưa cập nhật'
+                location: roomName || 'Chưa cập nhật',
+                qrCode: qrCodeString
             }
         });
         console.log(`🚀 [Queue] Đã ném job gửi mail vé cho: ${email}`);

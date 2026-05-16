@@ -140,7 +140,8 @@ export const confirmDemoPayment = async (req, res) => {
                 userRecord.full_name,
                 registration.workshops?.title,
                 registration.workshops?.start_time,
-                registration.workshops?.rooms?.name
+                registration.workshops?.rooms?.name,
+                registration.qr_code
             );
         }
       } catch (queueError) {
@@ -179,7 +180,8 @@ export const confirmDemoPayment = async (req, res) => {
                 userRecord.full_name,
                 registration.workshops?.title,
                 registration.workshops?.start_time,
-                registration.workshops?.rooms?.name
+                registration.workshops?.rooms?.name,
+                registration.qr_code
             );
         }
     } catch (queueError) {
@@ -318,7 +320,8 @@ export const createPaymentOrder = async (req, res) => {
                 userRecord.full_name,
                 registration.workshops?.title,
                 registration.workshops?.start_time,
-                registration.workshops?.rooms?.name
+                registration.workshops?.rooms?.name,
+                registration.qr_code
             );
         }
     } catch (queueError) {

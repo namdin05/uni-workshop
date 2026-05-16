@@ -211,7 +211,8 @@ export const registerWorkshop = async (req, res) => {
           userData.data.full_name, 
           workshopData.data.title, 
           workshopData.data.start_time, 
-          workshopData.data.rooms?.name
+          workshopData.data.rooms?.name,
+          qrString
         );
     }
 
