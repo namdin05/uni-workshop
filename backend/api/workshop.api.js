@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 
 import { supabase, supabaseAdmin } from '../utils/supabase.js';
 import { redis, workshopSeatKey } from '../utils/redis.js';
+import { enqueueTicketEmail } from '../utils/queueHelper.js';
 
 const ACTIVE_WORKSHOP_STATUS = 'published';
 
@@ -158,7 +159,7 @@ export const registerWorkshop = async (req, res) => {
     const qrString = `TKT-${Date.now()}-${userId}-${workshopId}`;
     const workshopData = await supabase
       .from('workshops')
-      .select('id, title, start_time')
+      .select('id, title, start_time, is_free, rooms(name)')
       .eq('id', workshopId)
       .single();
 
@@ -203,6 +204,16 @@ export const registerWorkshop = async (req, res) => {
       Math.max(seats - 1, 0);
 
     await redis.set(cacheKey, String(nextSeats));
+
+    if (workshopData.data?.is_free) {
+      await enqueueTicketEmail(
+          userData.data.email, 
+          userData.data.full_name, 
+          workshopData.data.title, 
+          workshopData.data.start_time, 
+          workshopData.data.rooms?.name
+        );
+    }
 
     return res.status(200).json({
       success: true,

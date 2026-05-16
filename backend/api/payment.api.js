@@ -1,8 +1,7 @@
 import { supabaseAdmin } from '../utils/supabase.js';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
-import { Queue } from 'bullmq';
-import IORedis from 'ioredis';
+import { enqueueTicketEmail } from '../utils/queueHelper.js';
 import {
   completeGatewayAttemptFailure,
   completeGatewayAttemptSuccess,
@@ -10,11 +9,6 @@ import {
   reserveGatewayAttempt,
   setGatewayMode,
 } from '../utils/paymentGateway.js';
-
-const redisConnection = new IORedis(process.env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-});
-const notificationQueue = new Queue('workshop-notifications', { connection: redisConnection });
 
 async function loadAuthenticatedUserId(authId) {
   const { data, error } = await supabaseAdmin
@@ -141,17 +135,13 @@ export const confirmDemoPayment = async (req, res) => {
             .single();
 
         if (userRecord) {
-            await notificationQueue.add('send-notification', {
-                user: { 
-                    email: userRecord.email, 
-                    full_name: userRecord.full_name || 'Sinh viên'
-                },
-                workshopData: { 
-                    title: registration.workshops?.title || 'Workshop chưa rõ tên',
-                    time: registration.workshops?.start_time ? new Date(registration.workshops.start_time).toLocaleString('vi-VN') : 'Chưa cập nhật',
-                    location: registration.workshops?.rooms?.name || 'Chưa cập nhật'
-                }
-            });
+            await enqueueTicketEmail(
+                userRecord.email,
+                userRecord.full_name,
+                registration.workshops?.title,
+                registration.workshops?.start_time,
+                registration.workshops?.rooms?.name
+            );
         }
       } catch (queueError) {
         console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
@@ -184,17 +174,13 @@ export const confirmDemoPayment = async (req, res) => {
             .single();
 
         if (userRecord) {
-            await notificationQueue.add('send-notification', {
-                user: { 
-                    email: userRecord.email, 
-                    full_name: userRecord.full_name || 'Sinh viên'
-                },
-                workshopData: { 
-                    title: registration.workshops?.title || 'Workshop chưa rõ tên',
-                    time: registration.workshops?.start_time ? new Date(registration.workshops.start_time).toLocaleString('vi-VN') : 'Chưa cập nhật',
-                    location: registration.workshops?.rooms?.name || 'Chưa cập nhật'
-                }
-            });
+            await enqueueTicketEmail(
+                userRecord.email,
+                userRecord.full_name,
+                registration.workshops?.title,
+                registration.workshops?.start_time,
+                registration.workshops?.rooms?.name
+            );
         }
     } catch (queueError) {
         console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
@@ -327,17 +313,13 @@ export const createPaymentOrder = async (req, res) => {
             .single();
 
         if (userRecord) {
-            await notificationQueue.add('send-notification', {
-                user: { 
-                    email: userRecord.email, 
-                    full_name: userRecord.full_name || 'Sinh viên'
-                },
-                workshopData: { 
-                    title: registration.workshops?.title || 'Workshop chưa rõ tên',
-                    time: registration.workshops?.start_time ? new Date(registration.workshops.start_time).toLocaleString('vi-VN') : 'Chưa cập nhật',
-                    location: registration.workshops?.rooms?.name || 'Chưa cập nhật'
-                }
-            });
+            await enqueueTicketEmail(
+                userRecord.email,
+                userRecord.full_name,
+                registration.workshops?.title,
+                registration.workshops?.start_time,
+                registration.workshops?.rooms?.name
+            );
         }
     } catch (queueError) {
         console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
