@@ -419,18 +419,17 @@ export const updateWorkshop = async (req, res) => {
 export const uploadCsv = async (req, res) => {
   try {
     const csv = req.body.csv;
-    const fileName = sanitizeCsvFileName(req.body.fileName);
 
     if (!csv) {
       return res.status(400).json({ message: 'Missing csv content' });
     }
 
-    const storagePath = `${Date.now()}-${fileName}`;
+    const storagePath = 'students_export.csv';
     const { data, error } = await supabaseAdmin.storage
       .from('csv_student')
       .upload(storagePath, Buffer.from(csv, 'utf8'), {
         contentType: 'text/csv; charset=utf-8',
-        upsert: false,
+        upsert: true,
       });
 
     if (error) {
