@@ -177,10 +177,17 @@ export const registerWorkshop = async (req, res) => {
     try {
       const workshopResult = await client.query(
         `
-          SELECT id, title, start_time, available_seats, is_free
-          FROM workshops
-          WHERE id = $1
-          FOR UPDATE
+          SELECT 
+            w.id, 
+            w.title, 
+            w.start_time, 
+            w.available_seats, 
+            w.is_free, 
+            r.name AS room_name
+          FROM workshops w
+          LEFT JOIN rooms r ON w.room_id = r.id
+          WHERE w.id = $1
+          FOR UPDATE OF w
         `,
         [workshopId],
       );
@@ -248,13 +255,13 @@ export const registerWorkshop = async (req, res) => {
       throw error;
     }
 
-    if (workshopData.data?.is_free) {
+    if (workshopRow.is_free) {
       await enqueueTicketEmail(
-          userData.data.email, 
-          userData.data.full_name, 
-          workshopData.data.title, 
-          workshopData.data.start_time, 
-          workshopData.data.rooms?.name,
+          userData.email,         
+          userData.full_name,      
+          workshopRow.title,      
+          workshopRow.start_time,
+          workshopRow.room_name,
           qrString
         );
     }
@@ -263,28 +270,6 @@ export const registerWorkshop = async (req, res) => {
       await redis.set(cacheKey, String(nextSeats));
     } catch (cacheErr) {
       console.warn('Redis cache update failed:', String(cacheErr?.message || cacheErr));
-    }
-
-    try {
-      if (isMailConfigured) {
-        const subject = `Registration confirmed: ${workshopRow.title}`;
-        const text = `You have successfully registered for ${workshopRow.title} on ${new Date(
-          workshopRow.start_time,
-        ).toLocaleString()}.\nTicket: ${qrString}`;
-        const html = `<p>You have successfully registered for <strong>${workshopRow.title}</strong> on <em>${new Date(
-          workshopRow.start_time,
-        ).toLocaleString()}</em>.</p><p>Ticket: <strong>${qrString}</strong></p><p><img src="${qrDataUrl}" alt="QR code"/></p>`;
-
-        await mailTransport.sendMail({
-          from: mailFrom,
-          to: userData.email,
-          subject,
-          text,
-          html,
-        });
-      }
-    } catch (notifyErr) {
-      console.warn('Notification dispatch failed:', String(notifyErr?.message || notifyErr));
     }
 
     return res.status(200).json({
@@ -396,7 +381,8 @@ export const createWorkshop = async (req, res) => {
     const payload = req.body;
     const { data, error } = await supabaseAdmin
       .from('workshops')
-      .insert([payload]);
+      .insert([payload])
+      .select();
 
     if (error) throw error;
     return res.status(201).json({ workshop: data[0] });

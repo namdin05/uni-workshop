@@ -64,9 +64,12 @@ export const confirmDemoPayment = async (req, res) => {
           r.workshop_id,
           w.title,
           w.price,
-          w.is_free
+          w.is_free,
+          w.start_time,
+          rm.name AS room_name
         FROM registrations r
         INNER JOIN workshops w ON w.id = r.workshop_id
+        LEFT JOIN rooms rm ON rm.id = w.room_id
         WHERE r.id = $1
         FOR UPDATE OF r
       `,
@@ -79,7 +82,7 @@ export const confirmDemoPayment = async (req, res) => {
       throw new Error('Registration not found');
     }
 
-    if (registration.user_id !== userId) {
+    if (Number(registration.user_id) !== userId) {
       await client.query('ROLLBACK');
       return res.status(403).json({ message: 'Bạn không có quyền thanh toán cho đăng ký này' });
     }
@@ -139,9 +142,9 @@ export const confirmDemoPayment = async (req, res) => {
             await enqueueTicketEmail(
                 userRecord.email,
                 userRecord.full_name,
-                registration.workshops?.title,
-                registration.workshops?.start_time,
-                registration.workshops?.rooms?.name,
+                registration.title,       
+                registration.start_time,  
+                registration.room_name,   
                 registration.qr_code
             );
         }
@@ -173,9 +176,9 @@ export const confirmDemoPayment = async (req, res) => {
             await enqueueTicketEmail(
                 userRecord.email,
                 userRecord.full_name,
-                registration.workshops?.title,
-                registration.workshops?.start_time,
-                registration.workshops?.rooms?.name,
+                registration.title,       
+                registration.start_time,  
+                registration.room_name,   
                 registration.qr_code
             );
         }
@@ -255,7 +258,7 @@ export const createPaymentOrder = async (req, res) => {
       throw new Error('Registration not found');
     }
 
-    if (registration.user_id !== userId) {
+    if (Number(registration.user_id) !== userId) {
       return res.status(403).json({ message: 'Bạn không có quyền thanh toán cho đăng ký này' });
     }
 
@@ -388,7 +391,7 @@ export const cancelRegistration = async (req, res) => {
     }
 
     // Verify ownership and status
-    if (registration.user_id !== userId) {
+    if (Number(registration.user_id) !== userId) {
       return res.status(403).json({ message: 'Unauthorized to cancel this registration' });
     }
 
