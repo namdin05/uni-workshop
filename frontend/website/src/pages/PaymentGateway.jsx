@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { confirmDemoPayment, fetchPaymentGatewayStatus, fetchWorkshop, loadSession } from '../api/auth';
+import { showTicketSuccessAlert } from '../utils/popup';
 import { fetchPaymentTimeout, cancelPendingRegistration } from '../api/paymentService';
 
 function formatVnd(amount) {
@@ -150,8 +151,7 @@ export default function PaymentGateway() {
 
       const response = await confirmDemoPayment({ registrationId, workshopId }, session.token);
       setGateway(response.gateway);
-      setMessage('Demo payment completed successfully.');
-      window.setTimeout(() => navigate('/tickets'), 700);
+      showTicketSuccessAlert(navigate);
     } catch (error) {
       setMessage(error.message || 'Payment failed.');
       try {

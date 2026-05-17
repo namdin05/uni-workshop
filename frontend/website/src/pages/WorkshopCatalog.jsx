@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchWorkshops, registerForWorkshop, loadSession, fetchMyRegistrations } from '../api/auth';
 import WorkshopDetailDialog from '../components/WorkshopDetailDialog';
+import { showTicketSuccessAlert } from '../utils/popup';
 
 export default function WorkshopCatalog() {
   const navigate = useNavigate();
@@ -123,11 +124,8 @@ export default function WorkshopCatalog() {
 
       setRegistrationStatus('registered');
       setRegistrationMessage('Registration successful!');
-      window.setTimeout(() => {
-        setSelectedWorkshop(null);
-        setRegistrationStatus(null);
-        setRegistrationMessage('');
-      }, 1500);
+      setSelectedWorkshop(null);
+      showTicketSuccessAlert(navigate);
     } catch (err) {
       setRegistrationStatus('error');
       setRegistrationMessage(err.message || 'Registration failed.');

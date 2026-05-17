@@ -13,6 +13,7 @@ import adminRoomRoutes from './routes/admin.room.route.js';
 
 import { verifyToken, authorizeRole } from './middlewares/auth.middlewares.js';
 import { startNightlySync } from './utils/nightlySync.js';
+import { startNotificationWorker } from './utils/notificationWorker.js';
 
 const app = express();
 app.use(cors());
@@ -51,6 +52,7 @@ app.use('/api/admin/workshops',
 );
 
 startNightlySync();
+startNotificationWorker();
 
 app.listen(PORT, () => {
     console.log(`🚀 UniHub Backend đang chạy tại http://127.0.0.1:${PORT}`);

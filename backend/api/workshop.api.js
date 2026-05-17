@@ -2,7 +2,7 @@ import QRCode from 'qrcode';
 
 import { pgPool, supabase, supabaseAdmin } from '../utils/supabase.js';
 import { redis, workshopSeatKey } from '../utils/redis.js';
-import { mailTransport, mailFrom, isMailConfigured } from '../utils/mailer.js';
+import { enqueueTicketEmail } from '../utils/queueHelper.js';
 
 const ACTIVE_WORKSHOP_STATUS = 'published';
 
@@ -248,6 +248,17 @@ export const registerWorkshop = async (req, res) => {
       throw error;
     }
 
+    if (workshopData.data?.is_free) {
+      await enqueueTicketEmail(
+          userData.data.email, 
+          userData.data.full_name, 
+          workshopData.data.title, 
+          workshopData.data.start_time, 
+          workshopData.data.rooms?.name,
+          qrString
+        );
+    }
+    
     try {
       await redis.set(cacheKey, String(nextSeats));
     } catch (cacheErr) {

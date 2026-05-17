@@ -2,6 +2,7 @@ import { pgPool, supabaseAdmin } from '../utils/supabase.js';
 import { redis, workshopSeatKey } from '../utils/redis.js';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
+import { enqueueTicketEmail } from '../utils/queueHelper.js';
 import {
   completeGatewayAttemptFailure,
   completeGatewayAttemptSuccess,
@@ -127,6 +128,27 @@ export const confirmDemoPayment = async (req, res) => {
 
       completeGatewayAttemptSuccess();
 
+      try {
+        const { data: userRecord } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name')
+            .eq('id', userId)
+            .single();
+
+        if (userRecord) {
+            await enqueueTicketEmail(
+                userRecord.email,
+                userRecord.full_name,
+                registration.workshops?.title,
+                registration.workshops?.start_time,
+                registration.workshops?.rooms?.name,
+                registration.qr_code
+            );
+        }
+      } catch (queueError) {
+        console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
+      }
+
       return res.status(200).json({
         message: 'Payment completed in demo mode',
         registrationId,
@@ -139,6 +161,27 @@ export const confirmDemoPayment = async (req, res) => {
     await client.query('COMMIT');
 
     completeGatewayAttemptSuccess();
+
+    try {
+        const { data: userRecord } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name')
+            .eq('id', userId)
+            .single();
+
+        if (userRecord) {
+            await enqueueTicketEmail(
+                userRecord.email,
+                userRecord.full_name,
+                registration.workshops?.title,
+                registration.workshops?.start_time,
+                registration.workshops?.rooms?.name,
+                registration.qr_code
+            );
+        }
+    } catch (queueError) {
+        console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
+    }
 
     return res.status(200).json({
       message: 'Payment already existed, returned existing record',
@@ -203,7 +246,7 @@ export const createPaymentOrder = async (req, res) => {
         status,
         qr_code,
         workshop_id,
-        workshops(id, title, price, is_free)
+        workshops(id, title, price, is_free, start_time, rooms(name))
       `)
       .eq('id', registrationId)
       .single();
@@ -270,6 +313,27 @@ export const createPaymentOrder = async (req, res) => {
     }
 
     completeGatewayAttemptSuccess();
+
+    try {
+        const { data: userRecord } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name')
+            .eq('id', userId)
+            .single();
+
+        if (userRecord) {
+            await enqueueTicketEmail(
+                userRecord.email,
+                userRecord.full_name,
+                registration.workshops?.title,
+                registration.workshops?.start_time,
+                registration.workshops?.rooms?.name,
+                registration.qr_code
+            );
+        }
+    } catch (queueError) {
+        console.error('❌ Lỗi khi đưa job vào Queue:', queueError.message);
+    }
 
     return res.status(200).json({ success: true, message: 'Thanh toán thành công', registrationId, transaction: result, gateway: getGatewayStatus() });
   } catch (error) {
