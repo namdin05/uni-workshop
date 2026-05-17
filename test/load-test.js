@@ -2,7 +2,6 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { Rate, Trend, Counter } from 'k6/metrics';
 
-// Metrics
 export const registrationSuccessRate = new Rate('registration_success');
 export const registrationDuration = new Trend('registration_duration_ms');
 export const systemDefended = new Counter('system_defended_429');
@@ -10,8 +9,6 @@ export const failedRegistrations = new Counter('failed_registrations');
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 
-// THAY ĐỔI 1: Khai báo danh sách các Workshop đang mở đăng ký
-// Bạn nhớ thay các ID này bằng ID thật trong Database của bạn nhé!
 const WORKSHOP_IDS = [
   '1',
   '2',
@@ -89,7 +86,7 @@ export default function () {
   } else {
     registrationSuccessRate.add(false);
     failedRegistrations.add(1);
-    // Log ra rõ ràng là user đang cố đăng ký workshop nào thì bị lỗi
+    
     console.error(`LỖI HỆ THỐNG (Workshop ${targetWorkshopId}): ${response.status} - ${response.body}`);
   }
 }
