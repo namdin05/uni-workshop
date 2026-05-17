@@ -128,14 +128,40 @@ export default function AddWorkshopModal({ onClose, onSave }) {
         throw new Error('Not authenticated');
       }
 
-      // Xử lý gộp Ngày và Giờ thành định dạng chuẩn ISO (hoặc chuẩn datetime-local cũ)
       if (!form.date || !form.time_start || !form.time_end) {
         throw new Error('Vui lòng chọn đầy đủ ngày và giờ.');
       }
 
+      // Khởi tạo Object Date để so sánh
+      const startObj = new Date(`${form.date}T${form.time_start}`);
+      const endObj = new Date(`${form.date}T${form.time_end}`);
+      const now = new Date();
+
+      if (isNaN(startObj.getTime()) || isNaN(endObj.getTime())) {
+        throw new Error('Ngày hoặc giờ không hợp lệ.');
+      }
+
+      // Ràng buộc 1: Thời gian bắt đầu phải trước thời gian kết thúc
+      if (startObj >= endObj) {
+        throw new Error('Giờ bắt đầu phải trước giờ kết thúc.');
+      }
+
+      // Ràng buộc 2: Workshop không thể tạo ở thời điểm trong quá khứ
+      if (startObj <= now) {
+        throw new Error('Thời gian bắt đầu phải ở trong tương lai.');
+      }
+
+      // Ràng buộc 3: Nếu được tạo với status published (nếu có tùy chọn này), phải cách hiện tại 48h
+      if (form.status === 'published') {
+        const diffHours = (startObj - now) / (1000 * 60 * 60);
+        if (diffHours < 48) {
+          throw new Error("Workshop 'published' phải có thời gian bắt đầu sau ít nhất 48 giờ kể từ hiện tại.");
+        }
+      }
+
       // Chuyển đổi thành string ISO hoàn chỉnh để gửi lên server
-      const startDateTime = new Date(`${form.date}T${form.time_start}`).toISOString();
-      const endDateTime = new Date(`${form.date}T${form.time_end}`).toISOString();
+      const startDateTime = startObj.toISOString();
+      const endDateTime = endObj.toISOString();
 
       const payload = {
         title: form.title,
@@ -148,7 +174,6 @@ export default function AddWorkshopModal({ onClose, onSave }) {
         total_seats: form.total_seats,
         available_seats: form.total_seats,
         status: form.status,
-        // Gửi đi 2 biến start_time và end_time như cũ
         start_time: startDateTime,
         end_time: endDateTime,
       };

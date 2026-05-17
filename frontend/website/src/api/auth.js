@@ -12,11 +12,14 @@ export { fetchProfile, fetchStudents, fetchMyRegistrations } from './userService
 // Workshop Service APIs
 export { fetchWorkshops, fetchWorkshop, fetchRooms, registerForWorkshop } from './workshopService.js';
 
+// Room Admin Service APIs
+export { fetchAdminRooms, createRoom, updateRoom, uploadRoomLayoutImage } from './roomService.js';
+
 // Admin Service APIs
 export { fetchAdminWorkshops, createWorkshop, warmUpWorkshopCache, updateWorkshop, updateWorkshopStatus, uploadCsv, fetchWorkshopRegistrations } from './adminService.js';
 
 // Payment Service APIs
-export { fetchPaymentGatewayStatus, setPaymentGatewayState, confirmDemoPayment, togglePaymentGateway } from './paymentService.js';
+export { fetchPaymentGatewayStatus, setPaymentGatewayState, confirmDemoPayment, togglePaymentGateway, fetchPaymentTimeout, setPaymentTimeout, cancelPendingRegistration } from './paymentService.js';
 
 // Storage Utils
 export { loadSession, saveSession, clearSession, STORAGE_KEY } from '../utils/storage.js';

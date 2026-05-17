@@ -9,6 +9,7 @@ import paymentRoutes from './routes/payment.route.js';
 import checkinRoutes from './routes/checkin.route.js';
 import aiRoutes from './routes/ai.route.js';
 import roomRoutes from './routes/room.route.js';
+import adminRoomRoutes from './routes/admin.room.route.js';
 
 import { verifyToken, authorizeRole } from './middlewares/auth.middlewares.js';
 import { startNightlySync } from './utils/nightlySync.js';
@@ -36,6 +37,7 @@ app.use('/api/ai', aiRoutes);
 
 // Rooms endpoints
 app.use('/api/rooms', roomRoutes);
+app.use('/api/admin/rooms', verifyToken, authorizeRole(['organizer', 'admin']), adminRoomRoutes);
 
 // No notification routes (email sending handled inline on registration)
 
