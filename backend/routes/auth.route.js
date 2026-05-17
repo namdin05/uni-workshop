@@ -5,7 +5,7 @@ import { registrationLimiter } from '../middlewares/rateLimit.js';
 const router = express.Router();
 
 router.post('/register', register);
-router.post('/login', login);
+router.post('/login', registrationLimiter, login);
 router.post('/activate/validate', validateActivation);
 router.post('/activate', activateAccount);
 

@@ -78,6 +78,12 @@ export const login = async (req, res) => {
 
         const profile = await loadUserProfile(data.user.id);
 
+        if (profile.role === 'staff') {
+            return res.status(403).json({ 
+                message: 'Tài khoản staff không được phép đăng nhập' 
+            });
+        }
+
         return res.status(200).json({
             message: 'Đăng nhập thành công',
             token: data.session.access_token,
