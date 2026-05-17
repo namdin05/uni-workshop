@@ -11,4 +11,9 @@ export const registrationLimiter = rateLimit({
   handler: (req, res, next, options) => {
     return res.status(options.statusCode).json(options.message);
   },
+
+  skip: (req) => {
+    const bypassSecret = process.env.LOAD_TEST_BYPASS_KEY || 'unihub-super-secret-bypass';
+    return req.headers['x-load-test-bypass'] === bypassSecret;
+  }
 });

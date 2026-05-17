@@ -1,11 +1,11 @@
 # UniHub Workshop - Technical Design
 
 ## Kiến trúc tổng thể
-- Architectural Style: Event-Driven Serverless Architecture.
+- Architectural Style: REST API Architecture với Transaction-Based Concurrency Control.
 
-- Lý do: Tận dụng khả năng tự động mở rộng (Auto-scaling) của Supabase Edge Functions để chịu tải 12.000 sinh viên trong 10 phút mà không cần quản lý server.
+- Lý do: Hỗ trợ các giao dịch phức tạp (transactions) với row locking để xử lý tranh chấp chỗ ngồi. Cần kiểm soát chặt chẽ tính nhất quán dữ liệu cho 12.000 sinh viên đăng ký trong 10 phút.
 
-- Giao tiếp: Các thành phần giao tiếp qua REST API (Edge Functions) và PostgreSQL Webhooks để kích hoạt các tác vụ như gửi email thông báo sau khi đăng ký thành công.
+- Giao tiếp: Các thành phần giao tiếp qua REST API (Node.js/Express Backend) và sử dụng PostgreSQL transactions với row-level locks (FOR UPDATE) để đảm bảo consistency.
 
 ## C4 Diagram
 ### Level 1 — System Context
@@ -45,15 +45,19 @@ Hệ thống UniHub Workshop được chia thành các container sau:
         - Check-in offline (SQLite local)
     - Đồng bộ dữ liệu với Backend khi có mạng
 
-3. Backend API (Supabase Edge Functions)
+3. Backend API (Node.js/Express)
     - Xử lý logic nghiệp vụ:
-        - Đăng ký workshop
-        - Thanh toán (tích hợp payment gateway)
-        Sinh mã QR
-        Gửi thông báo
+        - Đăng ký workshop (transaction với row lock)
+        - Thanh toán (transaction, idempotency control)
+        - Sinh mã QR
+        - Gửi thông báo
     - Giao tiếp với:
-        - Database
+        - Database via PgBouncer (connection pooling)
+        - Redis (cache, rate limiting)
         - External systems (AI, Payment, Email)
+    - Kết nối DB:
+        - PgBouncer: Quản lý connection pool (max 20 connections)
+        - Direct pg Pool: Cho phép transaction control với row locking
 
 4. Database (PostgreSQL - Supabase)
     - Lưu trữ:
@@ -61,24 +65,35 @@ Hệ thống UniHub Workshop được chia thành các container sau:
     - Áp dụng:
         - Row-Level Security (RLS)
 
-5. Message Queue (Upstash QStash)
+5. Message Queue (Upstash QStash / BullMQ)
 
     - Xử lý bất đồng bộ:
         - Gửi email hàng loạt
         - Xử lý AI (PDF → summary)
+        - Nightly sync từ CSV
 
-6. Cache / Rate Limiter (Redis)
+6. Cache & Rate Limiter (Redis)
 
     - Lưu trữ tạm:
-        - Số lượng chỗ còn lại
+        - Số lượng chỗ còn lại (workshop_seat_key)
+        - Cache fallback khi database lag
     - Giới hạn:
-        - Rate limit API
+        - Fixed window rate limiting (5 req/min per user tại endpoint đăng ký)
+
+7. Connection Pooling (PgBouncer)
+
+    - Quản lý connection pool tới PostgreSQL:
+        - Max connections: 20
+        - Idle timeout: 30 giây
+        - Connection timeout: 2 giây
+    - Mục đích: Tối ưu hóa việc reuse connections cho high-volume operations
 
 ```mermaid
 flowchart TD
     Client["Web App / Mobile App"]
-    Backend["Backend API"]
-    DB["Database"]
+    Backend["Backend API<br/>(Node.js/Express)"]
+    PgBouncer["PgBouncer<br/>(Connection Pool)"]
+    DB["PostgreSQL<br/>(Transactions)"]
 
     Payment["Payment Gateway"]
     Email["Email System"]
@@ -86,10 +101,12 @@ flowchart TD
 
     Queue["Message Queue"]
     Worker["Worker (Async Tasks)"]
-    Redis["Redis (Cache)"]
+    Redis["Redis<br/>(Cache/Rate Limit)"]
 
     Client --> Backend
-    Backend --> DB
+    Backend --> Redis
+    Backend --> PgBouncer
+    PgBouncer --> DB
 
     Backend --> Payment
     Backend --> Email
@@ -97,8 +114,6 @@ flowchart TD
 
     Backend --> Queue
     Queue --> Worker
-
-    Backend <--> Redis
 ```
 
 ## High-Level Architecture Diagram
@@ -106,9 +121,36 @@ flowchart TD
 
 - Luồng Check-in Offline: Dữ liệu quét được lưu vào Local SQLite -> App tự động retry gửi tới Edge Function khi có mạng -> Cập nhật trạng thái vào Postgres.
 
-- Luồng Tích hợp CSV: Script định kỳ đọc file từ thư mục được export -> Làm sạch dữ liệu -> UPSERT vào bảng users để cập nhật thông tin sinh viên mới nhất.
+- Luồng Tích hợp CSV: Script định kỳ (nightly sync) đọc file từ thư mục được export -> Làm sạch dữ liệu -> UPSERT vào bảng users để cập nhật thông tin sinh viên mới nhất.
 
-- Luồng AI Summary: BTC upload PDF lên Supabase Storage -> Trigger gọi Edge Function -> Gửi content sang Gemini API -> Lưu bản tóm tắt vào database.
+- Luồng AI Summary: BTC upload PDF lên Supabase Storage -> Trigger gọi Backend API -> Gửi content sang Gemini API qua Message Queue -> Lưu bản tóm tắt vào database.
+
+- Luồng Đăng ký Workshop (Transaction):
+  1. Client gửi request đăng ký kèm workshopId
+  2. Backend nhận request và validate permissions
+  3. Acquire pooled connection từ PgBouncer
+  4. BEGIN transaction
+  5. SELECT workshop với FOR UPDATE (row lock)
+  6. Kiểm tra available_seats > 0
+  7. INSERT registration record
+  8. UPDATE workshops SET available_seats -= 1
+  9. COMMIT transaction
+  10. Release connection về pool
+  11. Update Redis cache (best-effort)
+  12. Queue email notification (async)
+
+- Luồng Thanh toán (Transaction):
+  1. Client gửi request payment kèm idempotency_key
+  2. Backend validate user ownership
+  3. Acquire pooled connection
+  4. BEGIN transaction
+  5. SELECT registration với FOR UPDATE (lock)
+  6. Kiểm tra status, check idempotency_key trong payments
+  7. INSERT payment record (idempotency guarantee)
+  8. UPDATE registration status → 'confirmed'
+  9. COMMIT transaction
+  10. Release connection
+  11. Return success response
 
 ## Thiết kế cơ sở dữ liệu
 Lựa chọn công nghệ
@@ -229,3 +271,14 @@ Hành vi:
 - JWT vs Session: Chọn JWT (mặc định của Supabase Auth) để hỗ trợ xác thực không trạng thái (Stateless), giúp hệ thống scale dễ dàng hơn khi có tải lớn.
 
 - Offline Check-in: Sử dụng Local SQLite (Room/SQLite) trên Mobile để lưu tạm dữ liệu quét mã QR, sau đó đồng bộ lên Supabase bằng cơ chế Retry với Exponential Backoff khi có mạng trở lại.
+
+- Row Locking vs Pessimistic Locking: Chọn PostgreSQL row-level locks (FOR UPDATE) trong transaction context để ngăn race conditions khi multiple users cùng đăng ký cho 1 chỗ cuối cùng. Tránh được dirty reads và phantom reads.
+
+- PgBouncer Connection Pooling: Sử dụng PgBouncer với max 20 connections để optimize việc reuse connections cho high-volume operations (12.000 users/10 min). Mỗi connection được release về pool sau khi transaction hoàn thành, giảm overhead của PostgreSQL.
+
+- Redis Cache Strategy cho Seat Count:
+  - READ-THROUGH: Kiểm tra Redis trước, nếu không có thì query database
+  - WRITE-THROUGH: Update database → update Redis (bật lại nếu registration fail)
+  - BEST-EFFORT: Redis cache có thể stale ngắn thời gian, database là source of truth
+  
+- Idempotency Control cho Payment: Sử dụng unique constraint trên idempotency_key trong payments table để ngăn duplicate charges nếu client retry request.

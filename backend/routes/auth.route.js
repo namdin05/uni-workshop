@@ -1,5 +1,6 @@
 import express from 'express';
 import { register, login, validateActivation, activateAccount } from '../api/auth.api.js';
+import { registrationLimiter } from '../middlewares/rateLimit.js';
 
 const router = express.Router();
 

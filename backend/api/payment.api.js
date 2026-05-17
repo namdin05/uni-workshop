@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../utils/supabase.js';
+import { pgPool, supabaseAdmin } from '../utils/supabase.js';
 import { redis, workshopSeatKey } from '../utils/redis.js';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
@@ -14,17 +14,13 @@ import {
 let paymentTimeoutSeconds = 60;
 
 async function loadAuthenticatedUserId(authId) {
-  const { data, error } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('auth_id', authId)
-    .single();
+  const { rows } = await pgPool.query('SELECT id FROM users WHERE auth_id = $1 LIMIT 1', [authId]);
 
-  if (error || !data) {
+  if (!rows.length) {
     throw new Error('User not found');
   }
 
-  return data.id;
+  return Number(rows[0].id);
 }
 
 export const getGatewayState = async (req, res) => {
@@ -45,36 +41,50 @@ export const confirmDemoPayment = async (req, res) => {
   const registrationId = Number(req.body.registrationId);
   const idempotencyKey = String(req.body.idempotencyKey || `DEMO-PAY-${registrationId || 'unknown'}`);
   let gatewayReserved = false;
+  let client;
 
   if (!Number.isFinite(registrationId)) {
     return res.status(400).json({ message: 'Missing registrationId' });
   }
 
   try {
+    client = await pgPool.connect();
     const userId = await loadAuthenticatedUserId(req.user.id);
 
-    const { data: registration, error: registrationError } = await supabaseAdmin
-      .from('registrations')
-      .select(`
-        id,
-        user_id,
-        status,
-        qr_code,
-        workshop_id,
-        workshops(id, title, price, is_free)
-      `)
-      .eq('id', registrationId)
-      .single();
+    await client.query('BEGIN');
 
-    if (registrationError || !registration) {
+    const { rows: registrationRows } = await client.query(
+      `
+        SELECT
+          r.id,
+          r.user_id,
+          r.status,
+          r.qr_code,
+          r.workshop_id,
+          w.title,
+          w.price,
+          w.is_free
+        FROM registrations r
+        INNER JOIN workshops w ON w.id = r.workshop_id
+        WHERE r.id = $1
+        FOR UPDATE OF r
+      `,
+      [registrationId],
+    );
+
+    const registration = registrationRows[0] || null;
+
+    if (!registration) {
       throw new Error('Registration not found');
     }
 
     if (registration.user_id !== userId) {
+      await client.query('ROLLBACK');
       return res.status(403).json({ message: 'Bạn không có quyền thanh toán cho đăng ký này' });
     }
 
     if (registration.status === 'confirmed' || registration.status === 'checked_in') {
+      await client.query('ROLLBACK');
       return res.status(200).json({
         message: 'Registration already confirmed',
         registrationId: registration.id,
@@ -86,47 +96,34 @@ export const confirmDemoPayment = async (req, res) => {
     reserveGatewayAttempt();
     gatewayReserved = true;
 
-    const amount = Number(registration.workshops?.price ?? 0);
+    const amount = Number(registration.price ?? 0);
+    const { rows: paymentRows } = await client.query(
+      `
+        SELECT id, registration_id, amount, status, idempotency_key, created_at
+        FROM payments
+        WHERE registration_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+      `,
+      [registrationId],
+    );
 
-    const { data: existingPayment, error: paymentLookupError } = await supabaseAdmin
-      .from('payments')
-      .select('id, registration_id, amount, status, idempotency_key, created_at')
-      .eq('registration_id', registrationId)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (paymentLookupError) {
-      throw paymentLookupError;
-    }
-
-    const paymentRecord = existingPayment?.[0] || null;
+    const paymentRecord = paymentRows[0] || null;
 
     if (!paymentRecord) {
-      const { data: insertedPayment, error: insertError } = await supabaseAdmin
-        .from('payments')
-        .insert([
-          {
-            registration_id: registrationId,
-            amount,
-            status: 'success',
-            idempotency_key: idempotencyKey,
-          },
-        ])
-        .select('id, registration_id, amount, status, idempotency_key, created_at')
-        .single();
+      const { rows: insertedRows } = await client.query(
+        `
+          INSERT INTO payments (registration_id, amount, status, idempotency_key)
+          VALUES ($1, $2, 'success', $3)
+          RETURNING id, registration_id, amount, status, idempotency_key, created_at
+        `,
+        [registrationId, amount, idempotencyKey],
+      );
 
-      if (insertError) {
-        throw insertError;
-      }
+      const insertedPayment = insertedRows[0];
 
-      const { error: registrationUpdateError } = await supabaseAdmin
-        .from('registrations')
-        .update({ status: 'confirmed' })
-        .eq('id', registrationId);
-
-      if (registrationUpdateError) {
-        throw registrationUpdateError;
-      }
+      await client.query('UPDATE registrations SET status = \'confirmed\' WHERE id = $1', [registrationId]);
+      await client.query('COMMIT');
 
       completeGatewayAttemptSuccess();
 
@@ -138,14 +135,8 @@ export const confirmDemoPayment = async (req, res) => {
       });
     }
 
-    const { error: registrationUpdateError } = await supabaseAdmin
-      .from('registrations')
-      .update({ status: 'confirmed' })
-      .eq('id', registrationId);
-
-    if (registrationUpdateError) {
-      throw registrationUpdateError;
-    }
+    await client.query('UPDATE registrations SET status = \'confirmed\' WHERE id = $1', [registrationId]);
+    await client.query('COMMIT');
 
     completeGatewayAttemptSuccess();
 
@@ -156,10 +147,22 @@ export const confirmDemoPayment = async (req, res) => {
       gateway: getGatewayStatus(),
     });
   } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore rollback failures so the original error can be returned
+      }
+    }
+
     if (gatewayReserved) {
       completeGatewayAttemptFailure();
     }
     return res.status(503).json({ message: error.message, gateway: getGatewayStatus() });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
 

@@ -16,7 +16,7 @@ router.post('/create', verifyToken, createPaymentOrder);
 
 // Payment timeout configuration
 router.get('/timeout', getPaymentTimeout);
-router.post('/timeout', verifyToken, authorizeRole(['organizer', 'admin']), setPaymentTimeout);
+router.post('/timeout', verifyToken, authorizeRole(['organizer']), setPaymentTimeout);
 
 // Cancel pending payment registration (rollback slot)
 router.post('/cancel', verifyToken, cancelRegistration);

@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 
-import { supabase, supabaseAdmin } from '../utils/supabase.js';
+import { pgPool, supabase, supabaseAdmin } from '../utils/supabase.js';
 import { redis, workshopSeatKey } from '../utils/redis.js';
 import { mailTransport, mailFrom, isMailConfigured } from '../utils/mailer.js';
 
@@ -48,17 +48,13 @@ const sanitizeCsvFileName = (fileName) => {
 };
 
 const loadAuthenticatedUserId = async (authId) => {
-  const { data, error } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('auth_id', authId)
-    .single();
+  const { rows } = await pgPool.query('SELECT id FROM users WHERE auth_id = $1 LIMIT 1', [authId]);
 
-  if (error || !data) {
+  if (!rows.length) {
     throw new Error('User not found');
   }
 
-  return data.id;
+  return Number(rows[0].id);
 };
 
 export const prewarmWorkshopCache = async (req, res) => {
@@ -127,6 +123,8 @@ export const registerWorkshop = async (req, res) => {
     return res.status(400).json({ message: 'Workshop không hợp lệ' });
   }
 
+  let client;
+
   try {
     const cacheKey = workshopSeatKey(workshopId);
     const cachedSeats = parseSeatValue(await redis.get(cacheKey));
@@ -156,92 +154,145 @@ export const registerWorkshop = async (req, res) => {
       }
     }
 
-    const qrString = `TKT-${Date.now()}-${userId}-${workshopId}`;
-    const workshopData = await supabase
-      .from('workshops')
-      .select('id, title, start_time')
-      .eq('id', workshopId)
-      .single();
+    const { rows: userRows } = await pgPool.query(
+      'SELECT id, full_name, email FROM users WHERE id = $1 LIMIT 1',
+      [userId],
+    );
 
-    if (workshopData.error || !workshopData.data) {
-      return res.status(404).json({ success: false, message: 'Workshop không tồn tại' });
-    }
+    const userData = userRows[0] || null;
 
-    const userData = await supabase
-      .from('users')
-      .select('id, full_name, email')
-      .eq('id', userId)
-      .single();
-
-    if (userData.error || !userData.data) {
+    if (!userData) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const qrDataUrl = await generateQRCode({
-      ticketId: qrString,
-      userId,
-      workshopId,
-      userName: userData.data.full_name,
-      workshopTitle: workshopData.data.title,
-      timestamp: new Date().toISOString(),
-    });
+    const qrString = `TKT-${Date.now()}-${userId}-${workshopId}`;
+    let workshopRow;
+    let registrationRow;
+    let qrDataUrl;
+    let nextSeats = seats;
 
-    const { data, error } = await supabase.rpc('register_workshop', {
-      p_user_id: userId,
-      p_workshop_id: workshopId,
-      p_qr_code: qrString,
-    });
+    client = await pgPool.connect();
+    await client.query('BEGIN');
 
-    if (error) {
-      await redis.set(cacheKey, '0');
-      return res.status(400).json({ success: false, message: error.message });
+    try {
+      const workshopResult = await client.query(
+        `
+          SELECT id, title, start_time, available_seats, is_free
+          FROM workshops
+          WHERE id = $1
+          FOR UPDATE
+        `,
+        [workshopId],
+      );
+
+      workshopRow = workshopResult.rows[0] || null;
+
+      if (!workshopRow) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, message: 'Workshop không tồn tại' });
+      }
+
+      if (Number(workshopRow.available_seats) <= 0) {
+        await client.query('ROLLBACK');
+        await redis.set(cacheKey, '0');
+        return res.status(400).json({ success: false, message: 'Workshop đã hết chỗ' });
+      }
+
+      const registrationStatus = workshopRow.is_free ? 'confirmed' : 'pending_payment';
+
+      try {
+        const registrationResult = await client.query(
+          `
+            INSERT INTO registrations (user_id, workshop_id, status, qr_code)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id, status
+          `,
+          [userId, workshopId, registrationStatus, qrString],
+        );
+
+        registrationRow = registrationResult.rows[0] || null;
+      } catch (insertError) {
+        await client.query('ROLLBACK');
+
+        if (insertError?.code === '23505') {
+          return res.status(400).json({ success: false, message: 'User already registered for this workshop' });
+        }
+
+        throw insertError;
+      }
+
+      const seatsResult = await client.query(
+        `
+          UPDATE workshops
+          SET available_seats = available_seats - 1
+          WHERE id = $1
+          RETURNING available_seats
+        `,
+        [workshopId],
+      );
+
+      nextSeats = parseSeatValue(seatsResult.rows[0]?.available_seats) ?? Math.max(seats - 1, 0);
+
+      qrDataUrl = await generateQRCode({
+        ticketId: qrString,
+        userId,
+        workshopId,
+        userName: userData.full_name,
+        workshopTitle: workshopRow.title,
+        timestamp: new Date().toISOString(),
+      });
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
     }
 
-    const nextSeats =
-      parseSeatValue(data?.available_seats) ??
-      parseSeatValue(data?.remaining_seats) ??
-      parseSeatValue(data?.new_available_seats) ??
-      Math.max(seats - 1, 0);
-
-    await redis.set(cacheKey, String(nextSeats));
-
-    // send notification to the student (web + email) - non-fatal if fails
     try {
-      if (userData?.data) {
-        const userFull = userData.data;
-        const title = `Registration confirmed: ${workshopData.data.title}`;
-        const body = `You have successfully registered for ${workshopData.data.title} on ${new Date(
-          workshopData.data.start_time,
-        ).toLocaleString()}.\n\nTicket: ${qrString}`;
+      await redis.set(cacheKey, String(nextSeats));
+    } catch (cacheErr) {
+      console.warn('Redis cache update failed:', String(cacheErr?.message || cacheErr));
+    }
 
-          const subject = `Registration confirmed: ${workshopData.data.title}`;
-          const text = `You have successfully registered for ${workshopData.data.title} on ${new Date(
-            workshopData.data.start_time,
-          ).toLocaleString()}.\nTicket: ${qrString}`;
-          const html = `<p>You have successfully registered for <strong>${workshopData.data.title}</strong> on <em>${new Date(
-            workshopData.data.start_time,
-          ).toLocaleString()}</em>.</p><p>Ticket: <strong>${qrString}</strong></p><p><img src="${qrDataUrl}" alt="QR code"/></p>`;
+    try {
+      if (isMailConfigured) {
+        const subject = `Registration confirmed: ${workshopRow.title}`;
+        const text = `You have successfully registered for ${workshopRow.title} on ${new Date(
+          workshopRow.start_time,
+        ).toLocaleString()}.\nTicket: ${qrString}`;
+        const html = `<p>You have successfully registered for <strong>${workshopRow.title}</strong> on <em>${new Date(
+          workshopRow.start_time,
+        ).toLocaleString()}</em>.</p><p>Ticket: <strong>${qrString}</strong></p><p><img src="${qrDataUrl}" alt="QR code"/></p>`;
+
+        await mailTransport.sendMail({
+          from: mailFrom,
+          to: userData.email,
+          subject,
+          text,
+          html,
+        });
       }
-          await mailTransport.sendMail({
-            from: mailFrom,
-            to: userFull.email,
-            subject,
-            text,
-            html,
-          });
     } catch (notifyErr) {
       console.warn('Notification dispatch failed:', String(notifyErr?.message || notifyErr));
     }
 
     return res.status(200).json({
       success: true,
-      registrationId: data?.registration_id ?? data?.id ?? null,
+      registrationId: registrationRow?.id ?? null,
       qrCode: qrString,
       qrDataUrl,
-      status: data?.status ?? 'confirmed',
+      status: registrationRow?.status ?? 'confirmed',
       availableSeats: nextSeats,
     });
   } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // ignore rollback failures if the transaction was already closed
+      }
+    }
+
     if (error?.message?.toLowerCase().includes('duplicate')) {
       try {
         const workshopRow = await fetchSeatsFromDatabase(workshopId);
@@ -253,6 +304,10 @@ export const registerWorkshop = async (req, res) => {
     }
 
     return res.status(400).json({ success: false, message: error.message });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
 
@@ -401,7 +456,9 @@ export const updateWorkshopStatus = async (req, res) => {
     const { status: nextStatus } = req.body;
 
     if (!Number.isFinite(id)) return res.status(400).json({ message: 'Invalid workshop id' });
-    if (!['published', 'cancelled'].includes(String(nextStatus))) return res.status(400).json({ message: 'Invalid status' });
+    if (!['published', 'cancelled'].includes(String(nextStatus))) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
 
     const { data: existing, error: getErr } = await supabaseAdmin
       .from('workshops')
