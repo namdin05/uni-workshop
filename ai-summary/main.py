@@ -55,7 +55,7 @@ async def process_pdf_job(job, job_token):
         # 4. CẬP NHẬT TRỰC TIẾP VÀO CỘT DESCRIPTION 
         if workshop_id:
             print(f"[-] Đang cập nhật database cho workshop {workshop_id}...")
-            supabase.table("workshops").update({"description": summary_result}).eq("id", workshop_id).execute()
+            supabase.table("workshops").update({"ai_summary": summary_result}).eq("id", workshop_id).execute()
         else:
             print(f"[-] Đang tạo mới workshop.")
             
