@@ -1,17 +1,17 @@
 # Đặc tả: Check-in Offline và Đồng bộ dữ liệu
 ## Mô tả
-Cho phép nhân sự check-in thực hiện quét mã QR tại các khu vực mất mạng. Dữ liệu sẽ được lưu tạm thời trên thiết bị di động và tự động đồng bộ lên server khi kết nối internet được khôi phục.
+Cho phép nhân sự check-in thực hiện quét mã QR tại các khu vực mất mạng bằng ứng dụng Android. Dữ liệu sẽ được lưu tạm thời trên thiết bị Android và tự động đồng bộ lên server khi kết nối internet được khôi phục.
 
 ## Luồng chính
-Chuẩn bị (Online): Trước khi sự kiện bắt đầu, nhân sự mở App để tải danh sách mã QR (registration_id và qr_code) của workshop đó về cơ sở dữ liệu cục bộ (Local SQLite/Room).
+Chuẩn bị (Online): Trước khi sự kiện bắt đầu, nhân sự mở App Android để tải danh sách mã QR (registration_id và qr_code) của workshop đó về cơ sở dữ liệu cục bộ (Local SQLite trên thiết bị).
 
 Quét mã (Offline):
 
 - Nhân sự quét mã QR của sinh viên.
 
-- App đối chiếu mã QR với dữ liệu trong Local DB.
+- App đối chiếu mã QR với dữ liệu trong Local DB trên Android.
 
-- Nếu hợp lệ, App ghi nhận trạng thái "Đã tham dự" và lưu kèm timestamp quét thực tế vào bảng offline_sync_logs tại thiết bị.
+- Nếu hợp lệ, App ghi nhận trạng thái "Đã tham dự" và lưu kèm timestamp quét thực tế vào bảng offline_sync_logs tại thiết bị Android.
 
 Đồng bộ (Khi có mạng):
 
