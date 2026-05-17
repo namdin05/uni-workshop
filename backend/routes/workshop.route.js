@@ -10,17 +10,17 @@ router.post('/register', verifyToken, registrationLimiter, registerWorkshop);
 router.get('/', listWorkshops);
 router.get('/:id', getWorkshopById);
 
-router.post('/cache/prewarm', verifyToken, authorizeRole(['organizer', 'admin']), prewarmWorkshopCache);
+router.post('/cache/prewarm', verifyToken, authorizeRole(['organizer']), prewarmWorkshopCache);
 
 // Admin: fetch registrations for a workshop
-router.get('/:id/registrations', verifyToken, authorizeRole(['organizer', 'admin']), getWorkshopRegistrations);
+router.get('/:id/registrations', verifyToken, authorizeRole(['organizer']), getWorkshopRegistrations);
 
 // Admin/Organizer Routes
-router.post('/', verifyToken, authorizeRole(['organizer', 'admin']), createWorkshop);
-router.post('/sync/csv', verifyToken, authorizeRole(['staff', 'admin']), uploadCsv);
-router.patch('/:id', verifyToken, authorizeRole(['organizer', 'admin']), updateWorkshop);
+router.post('/', verifyToken, authorizeRole(['organizer']), createWorkshop);
+router.post('/sync/csv', verifyToken, authorizeRole(['staff']), uploadCsv);
+router.patch('/:id', verifyToken, authorizeRole(['organizer']), updateWorkshop);
 
 // admin: update status (published / cancelled)
-router.patch('/:id/status', verifyToken, authorizeRole(['organizer', 'admin']), updateWorkshopStatus);
+router.patch('/:id/status', verifyToken, authorizeRole(['organizer']), updateWorkshopStatus);
 
 export default router;
