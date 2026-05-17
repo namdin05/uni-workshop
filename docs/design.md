@@ -17,7 +17,7 @@ Sơ đồ này mô tả vị trí của hệ thống UniHub Workshop trong hệ 
 
     - Ban tổ chức (BTC): Quản lý nội dung workshop, theo dõi số lượng và xem thống kê.
 
-    - Nhân sự check-in: Sử dụng thiết bị di động để xác nhận sự hiện diện của sinh viên.
+    - Nhân sự check-in: Sử dụng thiết bị Android để xác nhận sự hiện diện của sinh viên.
 
 - Hệ thống ngoài:
 
@@ -38,11 +38,11 @@ Hệ thống UniHub Workshop được chia thành các container sau:
         - BTC (admin dashboard)
     - Giao tiếp với Backend API qua HTTPS
 
-2. Mobile Application (Flutter / React Native)
-    - Dành cho nhân sự check-in
+2. Mobile Application (Android / Flutter)
+    - Dành cho nhân sự check-in trên thiết bị Android
     - Hỗ trợ:
         - Quét QR
-        - Check-in offline (SQLite local)
+        - Check-in offline bằng SQLite cục bộ trên Android
     - Đồng bộ dữ liệu với Backend khi có mạng
 
 3. Backend API (Node.js/Express)
@@ -119,7 +119,7 @@ flowchart TD
 ## High-Level Architecture Diagram
 - Sơ đồ này tập trung vào các luồng dữ liệu đặc biệt như đồng bộ offline và tích hợp hệ thống cũ.
 
-- Luồng Check-in Offline: Dữ liệu quét được lưu vào Local SQLite -> App tự động retry gửi tới Edge Function khi có mạng -> Cập nhật trạng thái vào Postgres.
+- Luồng Check-in Offline: Dữ liệu quét được lưu vào Local SQLite trên Android -> App tự động retry gửi tới Edge Function khi có mạng -> Cập nhật trạng thái vào Postgres.
 
 - Luồng Tích hợp CSV: Script định kỳ (nightly sync) đọc file từ thư mục được export -> Làm sạch dữ liệu -> UPSERT vào bảng users để cập nhật thông tin sinh viên mới nhất.
 
@@ -270,7 +270,7 @@ Hành vi:
 
 - JWT vs Session: Chọn JWT (mặc định của Supabase Auth) để hỗ trợ xác thực không trạng thái (Stateless), giúp hệ thống scale dễ dàng hơn khi có tải lớn.
 
-- Offline Check-in: Sử dụng Local SQLite (Room/SQLite) trên Mobile để lưu tạm dữ liệu quét mã QR, sau đó đồng bộ lên Supabase bằng cơ chế Retry với Exponential Backoff khi có mạng trở lại.
+- Offline Check-in: Sử dụng Local SQLite trên thiết bị Android để lưu tạm dữ liệu quét mã QR, sau đó đồng bộ lên Supabase bằng cơ chế Retry với Exponential Backoff khi có mạng trở lại.
 
 - Row Locking vs Pessimistic Locking: Chọn PostgreSQL row-level locks (FOR UPDATE) trong transaction context để ngăn race conditions khi multiple users cùng đăng ký cho 1 chỗ cuối cùng. Tránh được dirty reads và phantom reads.
 
